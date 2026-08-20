@@ -1,0 +1,252 @@
+---
+// Self-hosted webfonts (the CSS font stacks reference these faces). Only the
+// weights the stylesheet actually uses; fontsource serves woff2 with
+// font-display: swap, so text renders immediately in fallbacks.
+import '@fontsource/sora/600.css';
+import '@fontsource/sora/700.css';
+import '@fontsource/sora/800.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+// Preload the above-the-fold faces so first paint doesn't flash fallbacks:
+// the headline weights and the body face. Hashed URLs come from Vite.
+import sora700Url from '@fontsource/sora/files/sora-latin-700-normal.woff2?url';
+import sora800Url from '@fontsource/sora/files/sora-latin-800-normal.woff2?url';
+import inter400Url from '@fontsource/inter/files/inter-latin-400-normal.woff2?url';
+import AlertBanner from '../components/AlertBanner.astro';
+import { NAV } from '../data/nav';
+import { getSettings, getDistrictFacts, getDepartmentFacts, getStationsWithApparatus, imageUrl } from '../lib/sanity';
+import { formatPhone,
+  telHref,
+  FALLBACK_PHONE,
+  FALLBACK_STATE_RADIO,
+  FALLBACK_EMAIL,
+  FALLBACK_FOUNDED,
+  FALLBACK_MAILING,
+  FALLBACK_DEPT_ADDRESS,
+} from '../lib/defaults';
+
+interface Props {
+  title: string;
+  description: string;
+  /** The thanks page sets this: reachable but not worth indexing. */
+  noindex?: boolean;
+}
+const { title, description, noindex = false } = Astro.props;
+
+// Parallel: in dev every page view pays these live, so serial awaits add
+// whole round trips to each render. (Builds are memoized regardless.) The
+// footer's street address comes from the headquarters station document, so
+// the secretary can fix it in the Studio.
+const [settings, facts, deptFacts, stations] = await Promise.all([
+  getSettings(),
+  getDistrictFacts(),
+  getDepartmentFacts(),
+  getStationsWithApparatus(),
+]);
+const hq = stations.find((s) => s.isHeadquarters) ?? stations[0];
+const deptAddress = hq?.address ?? FALLBACK_DEPT_ADDRESS;
+// Optional by design, no fallback: the Mail line only exists while the HQ
+// station document says mail goes somewhere other than the street.
+const deptMailing = hq?.mailingAddress ?? null;
+// Addresses render as deliberate lines (street, then city-state-zip), each
+// wrapping as a unit, instead of breaking wherever the column runs out.
+const commaAt = deptAddress.indexOf(',');
+const deptAddressLines =
+  commaAt > 0
+    ? [deptAddress.slice(0, commaAt), deptAddress.slice(commaAt + 1).trim()]
+    : [deptAddress];
+
+// Canonical URL from the site config; og:image prefers the hero photo once
+// one is uploaded, falling back to the badge.
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = imageUrl(settings?.heroImage, 1200) ?? new URL('/logo.png', Astro.site).href;
+
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+const stateRadio = formatPhone(settings?.phoneStateRadio ?? FALLBACK_STATE_RADIO);
+const email = settings?.email ?? FALLBACK_EMAIL;
+const boardEmail = settings?.boardEmail ?? email;
+// The footer allows overflow-wrap:anywhere so long mono strings can't push
+// the grid, but that let the email shed a lone letter at ~540px. Splitting
+// at the @ gives it one sanctioned break point instead.
+const [emailUser, emailDomain] = email.split('@');
+const [boardUser, boardDomain] = boardEmail.split('@');
+const mailing = facts?.districtMailing ?? FALLBACK_MAILING;
+const founded = deptFacts?.foundedYear ?? FALLBACK_FOUNDED;
+
+const year = new Date().getFullYear();
+
+// Normalize so "/district/" and "/district" both match.
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+// Structured data, home page only (the entity lives once). FireStation for
+// the department, the district as its parent GovernmentOrganization; the
+// alternateName arrays carry the names people actually search.
+const orgLd = path === '/' ? {
+  '@context': 'https://schema.org',
+  '@type': 'FireStation',
+  name: 'Mandan Rural Fire Department',
+  alternateName: ['MRFD', 'Mandan Rural Fire'],
+  url: Astro.site?.href,
+  logo: new URL('/logo.png', Astro.site).href,
+  telephone: phone,
+  email,
+  foundingDate: String(founded),
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: deptAddress,
+    addressRegion: 'ND',
+    addressCountry: 'US',
+  },
+  areaServed: 'Rural Morton County, North Dakota',
+  parentOrganization: {
+    '@type': 'GovernmentOrganization',
+    name: 'Mandan Rural Fire Protection District',
+    alternateName: ['Mandan Rural Fire District', 'Morton County fire protection district'],
+    url: Astro.site?.href,
+  },
+} : null;
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  {noindex && <meta name="robots" content="noindex" />}
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="sitemap" href="/sitemap-index.xml" />
+  <meta property="og:site_name" content="Mandan Rural Fire" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={ogImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preload" as="font" type="font/woff2" href={sora800Url} crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href={sora700Url} crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href={inter400Url} crossorigin />
+  <link rel="preconnect" href="https://cdn.sanity.io" />
+  {orgLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(orgLd)} />}
+  <ClientRouter />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <aside class="sidebar">
+    <div class="side-top">
+      <a class="brand" href="/">
+        <img class="logo" src="/logo.png" alt="Mandan Rural Fire Rescue badge" width="46" height="48" />
+        <span>
+          <span class="name">Mandan Rural Fire</span><br />
+          <span class="sub">EST. {founded}</span>
+        </span>
+      </a>
+      <button class="navtoggle" aria-expanded="false" aria-controls="nav">Menu</button>
+    </div>
+
+    <nav class="primary" id="nav" aria-label="Primary">
+      {NAV.map(([href, label]) => (
+        <a href={href} aria-current={path === href ? 'page' : undefined}>{label}</a>
+      ))}
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-911">Emergency? Call <a href="tel:911"><strong>911</strong></a></div>
+      <a class="btn btn--primary" href="/join">Become a volunteer</a>
+    </div>
+  </aside>
+
+  <main id="main">
+    <!-- Site-wide: live NWS warnings, the county burn ban, and the manual
+         banner reach every page, not just home (a resident checking the
+         prevention page during a ban must see the ban). -->
+    <AlertBanner />
+    <slot />
+  </main>
+
+  <footer class="site">
+    <div class="wrap"><div class="grid">
+      <div>
+        <h2>Mandan Rural Fire</h2>
+        <p style="font-size:.9rem">
+          Volunteer fire protection for the rural areas of Morton County since {founded}. For emergencies, call 911.
+        </p>
+      </div>
+      <div>
+        <h2>Department (operations)</h2>
+        <p class="mono" style="font-size:.84rem">
+          {deptAddressLines.map((line) => <><span class="addr">{line}</span><br /></>)}
+          {deptMailing && <><span class="addr">Mail: {deptMailing}</span><br /></>}
+          Non-emergency: <a href={telHref(phone)}>{phone}</a><br />
+          Dispatch: <a href={telHref(stateRadio)}>{stateRadio}</a><br />
+          {emailDomain ? (
+            <a class="email" href={`mailto:${email}`}>{emailUser}@<wbr />{emailDomain}</a>
+          ) : (
+            <a href={`mailto:${email}`}>{email}</a>
+          )}
+        </p>
+      </div>
+      <div>
+        <h2>District (funding)</h2>
+        <!-- One block, same grammar as the Department column: contact lines
+             at uniform rhythm, email last. -->
+        <p class="mono" style="font-size:.84rem">
+          {mailing.split('\n').map((line) => <><span class="addr">{line}</span><br /></>)}
+          {boardDomain ? (
+            <a class="email" href={`mailto:${boardEmail}`}>{boardUser}@<wbr />{boardDomain}</a>
+          ) : (
+            <a href={`mailto:${boardEmail}`}>{boardEmail}</a>
+          )}
+        </p>
+      </div>
+      <div>
+        <h2>Quick links</h2>
+        <ul style="list-style:none;padding:0;font-size:.9rem;line-height:1.9;margin:0;">
+          <li><a href="/prevention">Fire prevention tips</a></li>
+          <li><a href="/resources">Maps &amp; resources</a></li>
+          <li><a href="/join">Join the department</a></li>
+          <li><a href="/district#public-record">Agendas &amp; minutes</a></li>
+        </ul>
+      </div>
+    </div></div>
+    <div class="wrap legal">
+      <span>&copy; {year} Mandan Rural Fire Department &amp; Mandan Rural Fire Protection District</span>
+      <span>Targets WCAG 2.1 AA &middot; Report an access barrier: <a href={telHref(phone)}>{phone}</a></span>
+      <span><a href="/privacy">Privacy</a></span>
+      <span>Site by <a href="https://taylorbosch.com" target="_blank" rel="noopener">Taylor Bosch</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // ClientRouter swaps the DOM without reloading the document: element
+    // listeners rebind on every astro:page-load (fires on first load too);
+    // document-level listeners register once and query fresh elements.
+    document.addEventListener('astro:page-load', () => {
+      const tog = document.querySelector<HTMLButtonElement>('.navtoggle');
+      const nav = document.getElementById('nav');
+      if (tog && nav) {
+        tog.addEventListener('click', () => {
+          const open = nav.classList.toggle('open');
+          tog.setAttribute('aria-expanded', String(open));
+        });
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      const nav = document.getElementById('nav');
+      const tog = document.querySelector<HTMLButtonElement>('.navtoggle');
+      if (e.key === 'Escape' && nav?.classList.contains('open') && tog) {
+        nav.classList.remove('open');
+        tog.setAttribute('aria-expanded', 'false');
+        tog.focus();
+      }
+    });
+  </script>
+</body>
+</html>

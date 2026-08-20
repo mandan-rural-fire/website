@@ -1,0 +1,108 @@
+---
+// Per-activity burn restrictions from Morton County's declaration, judged
+// against today's rating. Server renders a safe generic (link included) and
+// the script upgrades it, same pattern as the prevention page's county rule.
+import { ND_DECLARATIONS_URL } from '../lib/fire';
+---
+<div class="condcard actcard" role="region" aria-label="Burn restrictions by activity">
+  <div class="kicker">County burn declaration</div>
+  <p class="muted actintro" id="actIntro">
+    Morton County restricts burning activities by the daily fire danger rating; see the state map for today's details.
+  </p>
+  <ul class="actlist" id="actList" hidden></ul>
+  <div class="condnote">
+    <span id="actNote">Morton County declaration</span>
+    <a href={ND_DECLARATIONS_URL} target="_blank" rel="noopener">Full declaration &rsaquo;</a>
+  </div>
+  <p class="actlegal" id="actLegal">
+    This list is a summary. Some activities have extra rules not shown here; the county's signed declaration is the final word.
+  </p>
+</div>
+
+{/* Pre-paint loading swap, same reasoning as ConditionsCard's inline
+    script: deferred modules run after first paint and the generic intro
+    would flash first. */}
+<script is:inline data-astro-rerun>
+  {
+    const el = document.getElementById('actIntro');
+    if (el) {
+      el.dataset.fallback = el.textContent;
+      el.textContent = 'Checking today’s restrictions…';
+      el.classList.add('condloading');
+    }
+  }
+</script>
+
+<script>
+  import { fetchFireStatus, isDangerLevel, DANGER_ORDER } from '../lib/fire';
+
+  document.addEventListener('astro:page-load', () => {
+    const list = document.getElementById('actList');
+    const intro = document.getElementById('actIntro');
+    const note = document.getElementById('actNote');
+    if (!list || !intro || !note) return;
+
+    // The inline script above swapped the intro to the pending pulse before
+    // first paint and stashed the generic copy; it comes back on any
+    // outcome that brings no data.
+    const introFallback = intro.dataset.fallback ?? intro.textContent;
+    intro.textContent = 'Checking today’s restrictions…';
+    intro.classList.add('condloading');
+
+    void fetchFireStatus().then((status) => {
+      intro.classList.remove('condloading');
+      intro.textContent = introFallback;
+      // Fetch failed: keep the safe generic. Only a successful fetch that
+      // really carries no declaration may claim none is in force.
+      if (!status) return;
+      const decl = status.burnDeclaration;
+      if (!decl) {
+        intro.textContent =
+          'No county burn declaration is in force right now. Standard state rules still apply: no open burning at High fire danger or above, or under a Red Flag Warning.';
+        // No declaration, nothing for the disclaimer to disclaim.
+        document.getElementById('actLegal')?.setAttribute('hidden', '');
+        return;
+      }
+      const activities = decl.activities ?? [];
+      if (activities.length === 0) return; // keep the server-rendered generic
+
+      const rating = isDangerLevel(status?.fireDanger) ? status.fireDanger : null;
+      const redFlag = Boolean(status?.redFlag);
+      const at = (level: string): number => DANGER_ORDER.indexOf(level as (typeof DANGER_ORDER)[number]);
+
+      list.replaceChildren(
+        ...activities.map((a) => {
+          // The county's own triggers, per activity: the threshold rating,
+          // and a Red Flag Warning only where the declaration checked that
+          // box (redFlag defaults false: older cached feeds lack the field,
+          // and a missing checkbox in the data means no Red Flag trigger).
+          const redFlagApplies = redFlag && a.redFlag === true;
+          const restricted =
+            a.threshold === 'Low' || redFlagApplies || (rating !== null && at(rating) >= at(a.threshold));
+          const li = document.createElement('li');
+          const label = document.createElement('span');
+          label.textContent = a.label;
+          const tag = document.createElement('span');
+          if (rating === null && !redFlagApplies && a.threshold !== 'Low') {
+            tag.className = 'acttag';
+            tag.textContent = `${a.threshold} or above`;
+          } else {
+            tag.className = restricted ? 'acttag no' : 'acttag ok';
+            tag.textContent = restricted ? 'Restricted' : 'Allowed';
+          }
+          li.append(label, tag);
+          return li;
+        }),
+      );
+      intro.hidden = true;
+      list.hidden = false;
+      note.textContent = decl.threshold === 'Low'
+        ? 'County burn ban: prohibited at every rating'
+        : redFlag && activities.some((a) => a.redFlag === true)
+          ? 'Red Flag Warning in effect'
+          : rating !== null
+            ? `At today's ${rating} rating`
+            : 'Thresholds from the county declaration';
+    });
+  });
+</script>

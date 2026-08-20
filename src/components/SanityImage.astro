@@ -1,0 +1,40 @@
+---
+import { imageUrl, imageAlt, imageDims, imageSrcSet, type ImageRef } from '../lib/sanity';
+
+interface Props {
+  image: ImageRef | null | undefined;
+  width?: number;
+  fallbackLabel?: string;
+  className?: string;
+  altFallback?: string;
+  /** Rendered width hint for the browser's source selection. */
+  sizes?: string;
+}
+const {
+  image,
+  width = 1200,
+  fallbackLabel = 'PHOTO',
+  className,
+  altFallback = '',
+  sizes = '(max-width: 880px) 100vw, 600px',
+} = Astro.props;
+
+const url = imageUrl(image, width);
+
+// Attribute dimensions reserve the box before the file arrives, so images do
+// not shift the layout as they load. Scaled to the requested width with the
+// source aspect ratio kept.
+const dims = imageDims(image);
+const w = dims ? Math.min(width, dims.width) : undefined;
+const h = dims && w ? Math.round((w * dims.height) / dims.width) : undefined;
+
+const srcset = imageSrcSet(image, [Math.round(width / 2), width, width * 2]);
+---
+{url ? (
+  <img src={url} srcset={srcset ?? undefined} sizes={srcset ? sizes : undefined}
+       alt={imageAlt(image, altFallback)} class={className}
+       width={w} height={h} loading="lazy"
+       style="display:block;width:100%;height:auto;" />
+) : (
+  <div class="photo-ph" aria-hidden="true">{fallbackLabel}</div>
+)}

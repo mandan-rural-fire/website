@@ -1,0 +1,171 @@
+---
+import { getAlertBanner } from '../lib/sanity';
+
+const settings = await getAlertBanner();
+
+// Manual override, set in the Studio. For anything the automatic sources do
+// not cover. It is known at build time, so it renders server-side and the
+// page never jumps for it; the script below adds live NWS warnings and the
+// county burn ban above it, and handles dismissal. No link: banners only
+// carry one when there is a genuinely relevant destination.
+const manual = settings?.alertEnabled
+  ? {
+      level: (settings.alertLevel ?? 'burnban') as 'redflag' | 'burnban',
+      tag: settings.alertTag ?? 'Notice',
+      message: settings.alertMessage ?? '',
+    }
+  : null;
+---
+<div id="alertSlot" data-manual={manual ? JSON.stringify(manual) : undefined}>
+  {manual && (
+    <div class={`alertbanner ${manual.level}`} role="alert"><div class="wrap">
+      <span class="al-tag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>{manual.tag}</span>
+      <span class="al-msg">{manual.message}</span>
+      <button class="al-x" aria-label="Dismiss alert">&times;</button>
+    </div></div>
+  )}
+</div>
+
+<script>
+  import { fetchFireStatus, openBurning, type AlertConfig, type FireStatus } from '../lib/fire';
+
+  const REFRESH_MS = 15 * 60 * 1000;
+
+  const RED_FLAG: AlertConfig = {
+    level: 'redflag',
+    tag: 'Red Flag Warning',
+    message: 'A Red Flag Warning is in effect. No open burning until it lifts.',
+  };
+  const FIRE_WATCH: AlertConfig = {
+    level: 'burnban',
+    tag: 'Fire Weather Watch',
+    message: 'A Fire Weather Watch is in effect. Use extreme caution with any open burning.',
+  };
+
+  // Static, trusted markup. Dynamic text never goes through innerHTML.
+  const ICON =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
+
+  // Dismissals last for the browser session and are keyed by content, so a
+  // genuinely new or reworded alert still shows.
+  const keyOf = (a: AlertConfig): string => `mrfd-alert-dismissed:${a.level}:${a.tag}:${a.message}`;
+  const isDismissed = (k: string): boolean => {
+    try { return sessionStorage.getItem(k) === '1'; } catch { return false; }
+  };
+  const remember = (k: string): void => {
+    try { sessionStorage.setItem(k, '1'); } catch { /* storage unavailable; dismiss still works for this page */ }
+  };
+
+  let shownKeys = '';
+
+  function manualConfig(host: HTMLElement): AlertConfig | null {
+    const raw = host.dataset.manual;
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as AlertConfig;
+    } catch {
+      return null;
+    }
+  }
+
+  /** The county burn ban banner, built from live declaration data. */
+  function countyBan(status: FireStatus | null): AlertConfig | null {
+    if (openBurning(status) !== 'ban') return null;
+    const config: AlertConfig = {
+      level: 'burnban',
+      tag: 'County Burn Ban',
+      message: 'A Morton County burn ban is in effect. All open burning is prohibited.',
+    };
+    const link = status?.burnDeclaration?.link;
+    if (link) {
+      config.link = link;
+      config.linkText = 'Current restrictions';
+    }
+    return config;
+  }
+
+  function bannerEl(a: AlertConfig, key: string): HTMLElement {
+    const banner = document.createElement('div');
+    banner.className = `alertbanner ${a.level}`;
+    banner.setAttribute('role', 'alert');
+    const wrap = document.createElement('div');
+    wrap.className = 'wrap';
+    const tag = document.createElement('span');
+    tag.className = 'al-tag';
+    tag.innerHTML = ICON;
+    tag.append(a.tag); // text node, never parsed as HTML
+    const msg = document.createElement('span');
+    msg.className = 'al-msg';
+    msg.append(`${a.message} `);
+    if (a.link && a.linkText) {
+      const link = document.createElement('a');
+      link.href = a.link;
+      link.textContent = `${a.linkText} ›`;
+      if (a.link.startsWith('http')) {
+        link.target = '_blank';
+        link.rel = 'noopener';
+      }
+      msg.append(link);
+    }
+    const close = document.createElement('button');
+    close.className = 'al-x';
+    close.setAttribute('aria-label', `Dismiss ${a.tag} alert`);
+    close.textContent = '×';
+    close.addEventListener('click', () => {
+      remember(key);
+      banner.remove();
+      shownKeys = '';
+    });
+    wrap.append(tag, msg, close);
+    banner.append(wrap);
+    return banner;
+  }
+
+  async function refresh(host: HTMLElement, manual: AlertConfig | null): Promise<void> {
+    const status = await fetchFireStatus();
+    // Every applicable alert shows, stacked in this order; each is
+    // independently dismissible for the session.
+    const candidates = [
+      status?.redFlag ? RED_FLAG : null,
+      status?.fireWatch ? FIRE_WATCH : null,
+      countyBan(status),
+      manual,
+    ].filter((a): a is AlertConfig => a !== null && !isDismissed(keyOf(a)));
+
+    const keys = candidates.map(keyOf).join('|');
+    if (keys === shownKeys) return; // nothing changed; don't re-render on the timer
+    host.replaceChildren(...candidates.map((a) => bannerEl(a, keyOf(a))));
+    shownKeys = keys;
+  }
+
+  // Init runs on first load and after every client-side navigation; the
+  // refresh interval registers once for the document's lifetime and queries
+  // the current page's slot each tick (pages without a banner no-op).
+  document.addEventListener('astro:page-load', () => {
+    const host = document.getElementById('alertSlot');
+    if (!host) return;
+    shownKeys = '';
+    const manual = manualConfig(host);
+    // The manual banner arrives server-rendered: respect an earlier dismissal
+    // from this session and wire its dismiss button before the first fetch.
+    if (manual) {
+      const key = keyOf(manual);
+      if (isDismissed(key)) {
+        host.replaceChildren();
+      } else {
+        shownKeys = key;
+        host.querySelector<HTMLButtonElement>('.al-x')?.addEventListener('click', () => {
+          remember(key);
+          host.replaceChildren();
+          shownKeys = '';
+        });
+      }
+    }
+    void refresh(host, manual);
+  });
+
+  window.setInterval(() => {
+    const host = document.getElementById('alertSlot');
+    if (host) void refresh(host, manualConfig(host));
+  }, REFRESH_MS);
+</script>

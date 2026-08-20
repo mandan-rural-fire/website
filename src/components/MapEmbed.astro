@@ -1,0 +1,40 @@
+---
+interface Props {
+  src: string;
+  title: string;
+  caption: string;
+  fullMapUrl?: string;
+  height?: number;
+}
+const { src, title, caption, fullMapUrl, height = 700 } = Astro.props;
+---
+<div class="embed">
+  {/* Scroll guard: the cross-origin map swallows touch swipes and touchpad
+      wheel events alike, so scrolling the page dies wherever the cursor or
+      finger lands on it. The iframe ignores all pointer input until the
+      pill is pressed; the same pill locks it again. */}
+  <div class="mapguard">
+    <iframe title={title} src={src} height={height} loading="lazy" allow="geolocation"></iframe>
+    <button type="button" class="mapguard-toggle" aria-pressed="false">
+      <span class="when-locked">Use the map</span>
+      <span class="when-active">Done with the map</span>
+    </button>
+  </div>
+  <div class="cap">
+    <span>{caption}</span>
+    {fullMapUrl && <a href={fullMapUrl} target="_blank" rel="noopener">Open full map &rsaquo;</a>}
+  </div>
+</div>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLButtonElement>('.mapguard-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const guard = btn.closest('.mapguard');
+        if (!guard) return;
+        const active = guard.classList.toggle('active');
+        btn.setAttribute('aria-pressed', String(active));
+      });
+    });
+  });
+</script>

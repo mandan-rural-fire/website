@@ -1,0 +1,7 @@
+# generated
+src/lib/sanity.types.ts
+schema.json
+dist/
+.astro/
+.netlify/
+yarn.lock

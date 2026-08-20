@@ -1,0 +1,236 @@
+---
+import Base from "../layouts/Base.astro";
+import RecruitBand from "../components/RecruitBand.astro";
+import {
+  getSettings,
+  getDepartmentFacts,
+  getOfficers,
+  getStationsWithApparatus,
+  imageUrl,
+  imageAlt,
+  type Officer,
+} from "../lib/sanity";
+import { formatPhone, telHref, FALLBACK_PHONE, FALLBACK_EMAIL, FALLBACK_FOUNDED } from "../lib/defaults";
+
+const [settings, deptFacts, officers, stationCount] = await Promise.all([
+  getSettings(),
+  getDepartmentFacts(),
+  getOfficers(),
+  getStationsWithApparatus().then((s) => s.length),
+]);
+
+const mission = deptFacts?.missionStatement ?? null;
+const founded = deptFacts?.foundedYear ?? FALLBACK_FOUNDED;
+// No fallbacks: guessed stats on a public body's site are worse than hidden
+// stats. Tiles and copy adapt when a Studio field is empty.
+const squareMiles = deptFacts?.squareMiles ?? null;
+const volunteers = deptFacts?.volunteerCount ?? null;
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+const email = settings?.email ?? FALLBACK_EMAIL;
+
+// Monogram for cards without a photo, from the person's name (first and
+// last initials), so every card is distinct even within one rank.
+function initials(name: string): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+---
+
+<Base
+  title="The Department | Mandan Rural Fire"
+  description="The all-volunteer Mandan Rural Fire Department: history, officers, mutual aid, and how the district and department differ."
+>
+  <div class="pagehead">
+    <div class="wrap">
+      <p class="eyebrow">About us</p>
+      <h1>The Department</h1>
+      <p class="lead">
+        An all-volunteer department serving rural Morton County.
+      </p>
+    </div>
+  </div>
+
+  {mission && (
+    <section style="background:var(--paper-2);border-bottom:1px solid var(--line);padding-block:2.6rem;">
+      <div class="wrap">
+        <p class="eyebrow">Our mission</p>
+        <p class="mission">{mission}</p>
+      </div>
+    </section>
+  )}
+
+  <section>
+    <div class="wrap" style="max-width:820px;"><div class="prose">
+      <h2 style="font-size:1.7rem;">Who we are</h2>
+      <p>
+        The Mandan Rural Fire Department (MRFD) has protected the rural areas
+        around Mandan for more than six decades. Our {volunteers !== null ? `roughly ${volunteers} ` : ''}volunteers cover
+        {squareMiles !== null ? ` about ${squareMiles} square miles of` : ' the'} farmland, prairie, and growing rural neighborhoods
+        in Morton County, North Dakota.
+      </p>
+      <p>
+        The department is entirely volunteer-staffed, many members with decades
+        of service. We respond from our stations around the clock and
+        year-round.
+      </p>
+    </div></div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat">
+          <div class="n">{founded}</div><div class="l">Serving since</div>
+        </div>
+        {squareMiles !== null && (
+          <div class="stat">
+            <div class="n">{squareMiles}</div><div class="l">Square miles</div>
+          </div>
+        )}
+        {volunteers !== null && (
+          <div class="stat">
+            <div class="n">~{volunteers}</div><div class="l">Volunteers</div>
+          </div>
+        )}
+        {stationCount > 0 && (
+          <div class="stat">
+            <div class="n">{stationCount}</div><div class="l">{stationCount === 1 ? "Station" : "Stations"}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section
+    style="background:var(--paper-2);border-block:1px solid var(--line);"
+  >
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">How it fits together</p><h2>
+          District vs. department
+        </h2>
+        <p class="muted">
+          Two connected parts share the "Mandan Rural Fire" name. Which is
+          which is the question residents ask most.
+        </p>
+      </div>
+      <div class="roles">
+        <div class="role fund">
+          <span class="tag" style="color:var(--gold)"
+            >The District &middot; the money</span
+          >
+          <h3>Mandan Rural Fire Protection District</h3>
+          <p class="muted">
+            A political subdivision of North Dakota, governed by an elected
+            board.
+          </p>
+          <ul>
+            <li>
+              Levies property taxes (the mill levy) to fund fire protection
+            </li>
+            <li>Approves the budget and major purchases</li>
+            <li>Owns the stations, engines, tenders, and gear</li>
+            <li>
+              Meets in public and posts minutes; files audited reports with the
+              State
+            </li>
+          </ul>
+          <a href="/district" style="font-family:var(--display);font-weight:600;"
+            >District &amp; board &rsaquo;</a
+          >
+        </div>
+        <div class="role ops">
+          <span class="tag" style="color:var(--accent-text)"
+            >The Department &middot; the work</span
+          >
+          <h3>Mandan Rural Fire Department</h3>
+          <p class="muted">
+            The volunteer firefighters and officers who deliver the service.
+          </p>
+          <ul>
+            <li>Responds to fires, rescues, and emergencies</li>
+            <li>Trains members and maintains the apparatus</li>
+            <li>Runs the stations and mutual-aid response</li>
+            <li>Provides prevention and public education</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {
+    officers.length > 0 && (
+      <section>
+        <div class="wrap">
+          <div class="sec-head">
+            <>
+              <p class="eyebrow">Leadership</p>
+              <h2>Officer corps</h2>
+            </>
+          </div>
+          <div class="cards c4">
+            {officers.map((o: Officer) => (
+              <article class="card">
+                <div class="card-media">
+                  {o.photo ? (
+                    <img
+                      src={imageUrl(o.photo, 600)}
+                      alt={imageAlt(o.photo, o.name)}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span class="monogram" aria-hidden="true">
+                      {initials(o.name)}
+                    </span>
+                  )}
+                </div>
+                <div class="pad">
+                  <p class="kicker">
+                    {o.rank}
+                  </p>
+                  <h3 style="font-size:1.15rem;margin:.2rem 0">{o.name}</h3>
+                  {o.yearsOfService && (
+                    <p class="muted" style="font-size:.9rem;margin:0">
+                      {o.yearsOfService} years of service.
+                    </p>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section style="background:var(--paper-2);border-block:1px solid var(--line);">
+    <div class="wrap split2" style="gap:2rem;">
+      <div>
+        <p class="eyebrow">We don't work alone</p>
+        <h2 style="font-size:1.5rem;margin:.3rem 0 .5rem;">Mutual aid</h2>
+        <p class="muted">
+          Big incidents need more than one department. We respond alongside
+          neighboring rural districts and the City of Mandan when calls demand
+          it.
+        </p>
+      </div>
+      <div id="access">
+        <p class="eyebrow">Accessibility</p>
+        <h2 style="font-size:1.5rem;margin:.3rem 0 .5rem;">
+          Accessibility statement
+        </h2>
+        <p class="muted">
+          As a North Dakota fire protection district, we work toward WCAG 2.1
+          Level AA. If you hit a barrier, call <a href={telHref(phone)}
+            >{phone}</a
+          > or email <a href={`mailto:${email}`}>{email}</a> and we'll help and fix
+          it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <RecruitBand raised={false} />
+</Base>

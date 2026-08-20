@@ -1,0 +1,51 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import Base from '../../layouts/Base.astro';
+import { getMeetings, hasAgenda } from '../../lib/content/meetings';
+
+export async function getStaticPaths() {
+  const meetings = await getMeetings();
+  return meetings
+    .filter(hasAgenda)
+    .map((m) => ({ params: { slug: m.slug }, props: { meeting: m } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { meeting } = Astro.props;
+---
+<Base
+  title={`Agenda: ${meeting.dateLabel} | Mandan Rural Fire`}
+  description={`Agenda for the ${meeting.title} on ${meeting.dateLabel}.`}
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">District &middot; Meeting agenda</p>
+    <h1>{meeting.title}</h1>
+    <p class="lead">
+      <time datetime={meeting.date}>{meeting.dateLabel}</time>
+      {meeting.time && <> &middot; {meeting.time}</>}
+      {meeting.location && <> &middot; {meeting.location}</>}
+    </p>
+  </div></div>
+
+  <section>
+    <div class="wrap" style="max-width:760px;"><div class="prose">
+      <p class="muted" style="font-size:.92rem;">Posted ahead of the meeting. Members of the public are welcome.</p>
+
+      {meeting.agendaBody
+        ? <Fragment set:html={meeting.agendaBody} />
+        : <p class="muted">The agenda is available as a download below.</p>}
+
+      {meeting.agendaPdfUrl && (
+        <p style="margin-top:1.6rem;">
+          <a class="btn" href={meeting.agendaPdfUrl}>Download the agenda PDF</a>
+        </p>
+      )}
+
+      <p class="no-print" style="margin-top:2rem;">
+        <a href="/district#public-record" style="font-family:var(--display);font-weight:600;">
+          &lsaquo; Back to all agendas and minutes
+        </a>
+      </p>
+    </div></div>
+  </section>
+</Base>

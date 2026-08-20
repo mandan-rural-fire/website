@@ -1,0 +1,53 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import Base from '../../layouts/Base.astro';
+import { getMeetings, hasMinutes } from '../../lib/content/meetings';
+
+export async function getStaticPaths() {
+  const meetings = await getMeetings();
+  return meetings
+    .filter(hasMinutes)
+    .map((m) => ({ params: { slug: m.slug }, props: { meeting: m } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { meeting } = Astro.props;
+---
+<Base
+  title={`Minutes: ${meeting.dateLabel} | Mandan Rural Fire`}
+  description={`Minutes of the ${meeting.title} held ${meeting.dateLabel}.`}
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">District &middot; Meeting minutes</p>
+    <h1>{meeting.title}</h1>
+    <p class="lead">
+      <time datetime={meeting.date}>{meeting.dateLabel}</time>
+      {meeting.time && <> &middot; {meeting.time}</>}
+      {meeting.location && <> &middot; {meeting.location}</>}
+    </p>
+  </div></div>
+
+  <section>
+    <div class="wrap" style="max-width:760px;"><div class="prose">
+      {meeting.minutesStatus && (
+        <p class="muted" style="font-size:.92rem;">Status: {meeting.minutesStatus}</p>
+      )}
+
+      {meeting.minutesBody
+        ? <Fragment set:html={meeting.minutesBody} />
+        : <p class="muted">The signed minutes are available as a download below.</p>}
+
+      {meeting.minutesPdfUrl && (
+        <p style="margin-top:1.6rem;">
+          <a class="btn" href={meeting.minutesPdfUrl}>Download the signed PDF</a>
+        </p>
+      )}
+
+      <p class="no-print" style="margin-top:2rem;">
+        <a href="/district#public-record" style="font-family:var(--display);font-weight:600;">
+          &lsaquo; Back to all agendas and minutes
+        </a>
+      </p>
+    </div></div>
+  </section>
+</Base>

@@ -1,0 +1,148 @@
+---
+import Base from '../layouts/Base.astro';
+import { getPreventionTopics, getSettings } from '../lib/sanity';
+import { formatPhone, telHref, FALLBACK_STATE_RADIO, MORTON_COUNTY_EM_URL } from '../lib/defaults';
+import { ND_BURN_RESTRICTIONS_URL } from '../lib/fire';
+
+const [settings, raw] = await Promise.all([getSettings(), getPreventionTopics()]);
+const stateRadio = formatPhone(settings?.phoneStateRadio ?? FALLBACK_STATE_RADIO);
+
+const topics = raw.map((t) => ({
+  id: t._id,
+  title: t.title,
+  slug: t.slug ?? t._id,
+  kicker: t.kicker,
+  summary: t.summary,
+  cards: (t.cards ?? []).filter((c) => c.heading && (c.points ?? []).length > 0),
+}));
+
+// The template's safe-burning section takes the next band in the rotation.
+const safeBurningRaised = topics.length % 2 === 1;
+---
+<Base
+  title="Fire Prevention | Mandan Rural Fire"
+  description="Fire prevention for rural homes, farms, and the wildland around them: structure safety, grass fires, equipment, and safe burning in Morton County."
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">Public safety</p>
+    <h1>Fire prevention</h1>
+    <p class="lead">Practical steps to prevent fires and protect your property, for both structures and the wildland around them.</p>
+  </div></div>
+
+  {topics.length > 0 && (
+    <section style="padding-block:1.6rem;border-bottom:1px solid var(--line);">
+      <div class="wrap">
+        <nav aria-label="Jump to a topic" class="jumpnav">
+          {topics.map((t) => (
+            <a class="jumpchip" href={`#${t.slug}`}>{t.title}</a>
+          ))}
+          <a class="jumpchip" href="#safe-burning">Safe burning basics</a>
+        </nav>
+      </div>
+    </section>
+  )}
+
+  {topics.length === 0 ? (
+    <section><div class="wrap"><p class="muted">Prevention information coming soon.</p></div></section>
+  ) : (
+    topics.map((t, i) => (
+      <section id={t.slug} style={i % 2 === 1 ? 'background:var(--paper-2);border-block:1px solid var(--line);' : undefined}>
+        <div class="wrap">
+          <div class="sec-head">
+            {t.kicker && <p class="eyebrow">{t.kicker}</p>}
+            <h2>{t.title}</h2>
+            {t.summary && <p class="muted">{t.summary}</p>}
+          </div>
+          <div class="cards c2 tipcards">
+            {t.cards.map((c) => (
+              <div class="card"><div class="pad">
+                <h3>{c.heading}</h3>
+                <ul class="points">
+                  {(c.points ?? []).map((p) => <li>{p}</li>)}
+                </ul>
+              </div></div>
+            ))}
+          </div>
+        </div>
+      </section>
+    ))
+  )}
+
+  <!-- Stable safety basics live in the template, per the structural-copy
+       convention; the home page's conditions card links here on days open
+       burning is allowed. -->
+  <section id="safe-burning" style={safeBurningRaised ? 'background:var(--paper-2);border-block:1px solid var(--line);' : undefined}>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Before you burn</p>
+        <h2>Safe burning basics</h2>
+        <p class="muted">Even on days open burning is allowed, these habits keep a controlled burn controlled.</p>
+      </div>
+      <div class="cards c2 tipcards">
+        <div class="card"><div class="pad">
+          <h3>Before you light</h3>
+          <ul class="points">
+            <li>Check the day's fire danger and any burn restrictions</li>
+            <li>Watch the wind; do not light on a windy day</li>
+            <li>Before a controlled burn, call ND State Radio at <a href={telHref(stateRadio)}>{stateRadio}</a> so a smoke report does not dispatch fire crews to your field</li>
+          </ul>
+        </div></div>
+        <div class="card"><div class="pad">
+          <h3>While it burns</h3>
+          <ul class="points">
+            <li>Clear the area down to bare soil, wide enough that nothing can creep</li>
+            <li>Keep water and hand tools within reach the entire time</li>
+            <li>Never leave a fire unattended, even for a few minutes</li>
+            <li>Put it out if the wind picks up</li>
+          </ul>
+        </div></div>
+        <div class="card"><div class="pad">
+          <h3>Putting it out</h3>
+          <ul class="points">
+            <li>Fully extinguish before you leave: soaked, stirred, and cold to the touch</li>
+            <li>Check the edges, and check back the next day; wind finds embers you missed</li>
+          </ul>
+        </div></div>
+        <div class="card"><div class="pad">
+          <h3>Morton County's restrictions</h3>
+          <!-- The sentence is server-rendered as a safe generic and upgraded
+               in the browser with the county's live declaration threshold, so
+               the stated rule can never go stale. -->
+          <p id="countyRule" class="cardtext">
+            Morton County ties open burning to the daily fire danger rating; check the statewide map for today's status.
+          </p>
+          <p class="cardtext muted">
+            Cities in the county, including Mandan, have their own burning ordinances not shown on the state map.
+            See the <a href={ND_BURN_RESTRICTIONS_URL} target="_blank" rel="noopener">current restrictions map</a> or
+            {" "}<a href={MORTON_COUNTY_EM_URL} target="_blank" rel="noopener">Morton County Emergency Management</a> for the declaration itself.
+          </p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    import { fetchFireStatus, isDangerLevel } from '../lib/fire';
+
+    // Re-runs after client-side navigation; the fetch is CDN-cached.
+    document.addEventListener('astro:page-load', () => {
+    const rule = document.getElementById('countyRule');
+    if (rule) {
+      const el = rule;
+      void fetchFireStatus().then((status) => {
+        const decl = status?.burnDeclaration;
+        if (!decl?.threshold) return;
+        const through = decl.expires
+          ? ` The declaration runs through ${new Date(decl.expires).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
+          : '';
+        el.textContent =
+          decl.threshold === 'Low'
+            ? `Under the county's current declaration, ALL open burning is prohibited: a county-wide burn ban is in effect.${through}`
+            : isDangerLevel(decl.threshold)
+              ? `Under the county's current declaration, open burning is prohibited whenever the fire danger rating is ${decl.threshold} or above.${through}`
+              : el.textContent;
+      });
+    }
+    });
+  </script>
+</Base>

@@ -1,0 +1,100 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getSettings } from '../../lib/sanity';
+import { formatPhone, telHref, FALLBACK_PHONE, FALLBACK_EMAIL } from '../../lib/defaults';
+
+const settings = await getSettings();
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+const email = settings?.email ?? FALLBACK_EMAIL;
+---
+<Base
+  title="Become a Volunteer | Mandan Rural Fire"
+  description="Join the Mandan Rural Fire Department. No experience required to start; we provide the training and the gear."
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">Recruitment</p>
+    <h1>Become a volunteer</h1>
+    <p class="lead">No experience required to start. We provide the training and the gear.</p>
+  </div></div>
+
+  <section>
+    <div class="wrap split2" style="gap:2.5rem;align-items:start;">
+      <div class="prose">
+        <h2 style="font-size:1.5rem;">What to expect</h2>
+        <p>New members train alongside experienced firefighters and can work toward Firefighter I and II certification. You'll learn fire suppression, rural water supply, vehicle rescue, and more.</p>
+        <p><strong>The basics:</strong> be 18 or older, live or work in or near the district, and respond to calls when you're available. We'll train you on everything else.</p>
+        <p class="muted" style="font-size:.95rem;">
+          Questions before applying? Call <a href={telHref(phone)}>{phone}</a> or email <a href={`mailto:${email}`}>{email}</a>.
+        </p>
+      </div>
+
+      <div>
+        <h2 style="font-size:1.5rem;margin-bottom:.8rem;">The application</h2>
+        <div class="note">
+          <strong>About sensitive information:</strong> this form does not ask for your Social Security number. We
+          collect that later, in person or through our background-check provider's secure portal, only if your
+          application moves forward. Never email your SSN.
+        </div>
+
+        <form
+          name="volunteer-application"
+          method="POST"
+          action="/join/thanks"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+        >
+          <input type="hidden" name="form-name" value="volunteer-application" />
+          <p hidden>
+            <label>Leave this field empty<input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <label class="field">Full name<input required name="name" autocomplete="name" /></label>
+          <label class="field">Email<input required type="email" name="email" autocomplete="email" /></label>
+          <label class="field">Phone<input name="phone" autocomplete="tel" /></label>
+          <label class="field">Do you live within the fire district?
+            <select required name="in-district" id="inDistrict">
+              <option value="" disabled selected>Select...</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Not sure</option>
+            </select>
+          </label>
+          <p class="field-help">
+            <a href="/resources#district-map" target="_blank" rel="noopener">Check the district map &rsaquo;</a>
+          </p>
+          <!-- Stays in the DOM whatever the answer (Netlify detects fields at
+               build time); the script below only toggles visibility. -->
+          <label class="field" id="whereField" hidden>If not, where do you live?<input name="location" /></label>
+          <label class="field">Are you 18 or older?
+            <select required name="age">
+              <option value="" disabled selected>Select...</option>
+              <option>Yes</option>
+              <option>No</option>
+            </select>
+          </label>
+          <label class="field">Certifications, if any (FF I/II, EMT, CPR, none yet)<input name="certs" /></label>
+          <label class="field">Why do you want to join?<textarea name="why" rows="4"></textarea></label>
+          <button class="btn btn--primary" type="submit">Send application</button>
+          <p class="muted" style="font-size:.85rem;margin-top:.9rem;">
+            <a href="/privacy">How we handle your information &rsaquo;</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Show the where-do-you-live field only when the applicant is outside
+    // the district (or unsure). Re-binds after client-side navigation.
+    document.addEventListener('astro:page-load', () => {
+      const select = document.getElementById('inDistrict') as HTMLSelectElement | null;
+      const where = document.getElementById('whereField');
+      if (!select || !where) return;
+      const update = (): void => {
+        where.hidden = select.value === '' || select.value === 'Yes';
+      };
+      select.addEventListener('change', update);
+      update();
+    });
+  </script>
+</Base>

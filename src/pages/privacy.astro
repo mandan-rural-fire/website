@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+import { getSettings } from '../lib/sanity';
+import { formatPhone, telHref, FALLBACK_PHONE, FALLBACK_EMAIL } from '../lib/defaults';
+
+const settings = await getSettings();
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+const email = settings?.email ?? FALLBACK_EMAIL;
+---
+<Base
+  title="Privacy | Mandan Rural Fire"
+  description="How the Mandan Rural Fire Department and Fire Protection District handle information collected through this website."
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">Your information</p>
+    <h1>Privacy</h1>
+    <p class="lead">Plain words about what this site collects and what happens to it.</p>
+  </div></div>
+
+  <section>
+    <div class="wrap" style="max-width:760px;"><div class="prose">
+      <h2>What this site collects</h2>
+      <p>
+        Browsing this site collects nothing about you. There are no analytics, no advertising,
+        and no tracking cookies. The one thing stored in your browser is a note of any alert
+        banner you dismiss, kept on your device for the browsing session and never sent to us.
+      </p>
+      <p>
+        The volunteer application form collects exactly what it shows: your name, email, phone,
+        whether you live in the district (and where, if outside it), whether you are 18 or older,
+        any certifications, and why you want to join.
+      </p>
+
+      <h2>What we do with it</h2>
+      <p>
+        Applications are used for one purpose: evaluating and contacting volunteer applicants.
+        Submissions are stored by our hosting provider (Netlify) and read by the department's
+        officers responsible for recruitment. We do not sell information, and we do not share it
+        except as needed for that purpose or as the law requires.
+      </p>
+      <p>
+        The form never asks for your Social Security number. If your application moves forward,
+        the background-check step happens in person or through the provider's secure portal.
+      </p>
+
+      <h2>How long we keep it</h2>
+      <p>
+        Applications are kept while they are being considered and for our records afterward. If
+        you want yours removed, ask and we will delete it, unless a law requires keeping it.
+      </p>
+
+      <h2>The open records law</h2>
+      <p>
+        The Mandan Rural Fire Protection District is a political subdivision of North Dakota, so
+        records it holds can be subject to the state's open records law. If a record containing
+        your information were requested, we would follow that law, including any exceptions it
+        provides.
+      </p>
+
+      <h2>Questions</h2>
+      <p>
+        Call <a href={telHref(phone)}>{phone}</a> or email{' '}
+        <a href={`mailto:${email}`}>{email}</a>.
+      </p>
+    </div></div>
+  </section>
+</Base>

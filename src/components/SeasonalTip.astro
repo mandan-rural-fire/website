@@ -1,0 +1,74 @@
+---
+import { currentSeason, getTipsForSeason } from '../lib/content/season';
+
+const season = currentSeason();
+const tips = await getTipsForSeason(season);
+---
+{tips.length > 0 && (
+  <section>
+    <div class="wrap">
+      <div class="tipcard tipgrid">
+        <div class="tipbody">
+          <div class="tiphead">
+            <span class="kicker">Seasonal safety tip &middot; {season}</span>
+            <a href="/prevention">All prevention tips &rsaquo;</a>
+          </div>
+          <p class="tiptext" id="tipText" aria-live="polite">{tips[0]}</p>
+          <div class="tipdots" id="tipDots" aria-label="Choose a tip"></div>
+        </div>
+        <div class="tipimg photo-ph" aria-hidden="true">{season.toUpperCase()} &middot; SAFETY PHOTO</div>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline data-astro-rerun define:vars={{ tips }}>
+  (function () {
+    const ROTATE_MS = 6500;
+    // data-astro-rerun re-executes this after client-side swaps; clear the
+    // previous visit's rotation timer so they never stack.
+    if (window.__tipTimer) { window.clearInterval(window.__tipTimer); window.__tipTimer = null; }
+    const textEl = document.getElementById('tipText');
+    const dotsEl = document.getElementById('tipDots');
+    if (!textEl || !Array.isArray(tips) || tips.length === 0) return;
+
+    let index = 0;
+    const dots = [];
+
+    function render() {
+      const tip = tips[index];
+      if (!tip) return;
+      textEl.textContent = tip;
+      dots.forEach(function (b, i) {
+        b.setAttribute('aria-current', i === index ? 'true' : 'false');
+      });
+    }
+
+    if (dotsEl && tips.length > 1) {
+      tips.forEach(function (_, i) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Tip ' + (i + 1));
+        b.addEventListener('click', function () { index = i; render(); });
+        dotsEl.appendChild(b);
+        dots.push(b);
+      });
+    }
+
+    render();
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce && tips.length > 1) {
+      window.__tipTimer = window.setInterval(function () {
+        index = (index + 1) % tips.length;
+        render();
+      }, ROTATE_MS);
+      const card = textEl.closest('.tipcard');
+      if (card) {
+        const stop = function () { window.clearInterval(window.__tipTimer); };
+        card.addEventListener('mouseenter', stop);
+        card.addEventListener('focusin', stop);
+      }
+    }
+  })();
+</script>
+)}

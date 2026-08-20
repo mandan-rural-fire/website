@@ -1,0 +1,41 @@
+# Netlify config. This file is the source of truth; it overrides the UI's
+# build settings. The fire-status function is reachable at a clean /api path.
+
+[build]
+  command = "yarn build"
+  publish = "dist"
+
+[build.environment]
+  # Matches "engines" in package.json.
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# astro dev daemonizes (background dev server) and the parent exits, which
+# netlify dev reads as the framework dying and shuts down. So: ensure the
+# daemon, then stay attached to its logs so netlify dev has a live child.
+[dev]
+  framework = "#custom"
+  command = "sh -c 'npx astro dev; exec npx astro dev logs --follow'"
+  targetPort = 4321
+  port = 8888
+
+[[redirects]]
+  from = "/api/fire-status"
+  to = "/.netlify/functions/fire-status"
+  status = 200
+
+# Astro emits content-hashed assets under /_astro; safe to cache forever.
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"

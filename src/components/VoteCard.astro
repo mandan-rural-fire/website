@@ -1,0 +1,41 @@
+---
+import { getUpcomingVotes } from '../lib/sanity';
+import { formatDateLabel } from '../lib/defaults';
+
+/**
+ * Upcoming public votes, highlighted wherever this component is placed
+ * (home and district). Renders nothing when no vote is scheduled. The
+ * build filters to upcoming votes; the inline script re-checks on load so
+ * a card can never linger past voting day between rebuilds.
+ */
+const votes = await getUpcomingVotes();
+---
+{votes.length > 0 && (
+  <div class="votes">
+    {votes.map((v) => (
+      <div class="votecard" data-vote-date={v.date}>
+        <div class="kicker">Upcoming public vote</div>
+        <div class="vc-date">{formatDateLabel(v.date ?? '')}</div>
+        <h3 class="vc-title">{v.title}</h3>
+        <p class="vc-summary">{v.summary}</p>
+        {v.votingInfo && <p class="mono vc-info">{v.votingInfo}</p>}
+        {v.link && (
+          <a class="vc-link" href={v.link} target="_blank" rel="noopener">Official notice &rsaquo;</a>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+
+<script>
+  // Hide any vote whose day has passed; the static build only refreshes on
+  // content changes, so this keeps a stale card from lingering. Re-runs on
+  // every client-side navigation.
+  document.addEventListener('astro:page-load', () => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    for (const el of document.querySelectorAll<HTMLElement>('[data-vote-date]')) {
+      if ((el.dataset.voteDate ?? '') < todayStr) el.remove();
+    }
+  });
+</script>

@@ -1,0 +1,169 @@
+---
+import Base from '../layouts/Base.astro';
+import ConditionsCard from '../components/ConditionsCard.astro';
+import SeasonalTip from '../components/SeasonalTip.astro';
+import NextMeeting from '../components/NextMeeting.astro';
+import RecruitBand from '../components/RecruitBand.astro';
+import VoteCard from '../components/VoteCard.astro';
+import SanityImage from '../components/SanityImage.astro';
+import { getSettings, getDepartmentFacts, getHappenings, imageUrl, imageAlt, imageSrcSet } from '../lib/sanity';
+import { getRecentMinutes } from '../lib/content/meetings';
+import { formatPhone, telHref, FALLBACK_PHONE, FALLBACK_STATE_RADIO, FALLBACK_FOUNDED } from '../lib/defaults';
+
+const [settings, deptFacts, happenings, recent] = await Promise.all([
+  getSettings(),
+  getDepartmentFacts(),
+  getHappenings(3),
+  getRecentMinutes(3),
+]);
+
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+const stateRadio = formatPhone(settings?.phoneStateRadio ?? FALLBACK_STATE_RADIO);
+const founded = deptFacts?.foundedYear ?? FALLBACK_FOUNDED;
+const squareMiles = deptFacts?.squareMiles ?? null;
+// A real <img> with fetchpriority, not a CSS background: the preload scanner
+// can see it, so the largest paint starts downloading immediately, and srcset
+// keeps phones from pulling the 2000px version.
+const heroImage = settings?.heroImage;
+const heroUrl = imageUrl(heroImage, 2000);
+const heroSrcSet = imageSrcSet(heroImage, [800, 1400, 2000]);
+---
+<Base
+  title="Mandan Rural Fire Department | Morton County, ND"
+  description="Volunteer fire protection for rural Morton County, North Dakota. Today's fire danger, prevention, district board meetings, and how to join MRFD."
+>
+  <!-- HERO -->
+  <section class="hero">
+    <div class={heroUrl ? 'hero-photo' : 'hero-photo no-photo'}>
+      {/* No placeholder when the photo is missing: the public site never
+          shows scaffolding. The gradient background carries the hero until
+          the secretary uploads a photo in Site settings. */}
+      {heroUrl && (
+        <img class="hero-img" src={heroUrl} srcset={heroSrcSet ?? undefined} sizes="100vw"
+             alt={imageAlt(heroImage)} fetchpriority="high" />
+      )}
+      <div class="hero-cap"><div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Morton County &middot; Est. {founded}</p>
+          <h1>Volunteer fire protection for the rural areas around Mandan.</h1>
+          <p class="lead">Covering {squareMiles !== null ? `${squareMiles} square miles` : 'the rural areas'} of Morton County, North Dakota.</p>
+          <div class="ctas">
+            <a class="btn btn--primary" href="/join">Become a volunteer</a>
+            <a class="btn" href="/prevention">Fire prevention &amp; safety</a>
+          </div>
+        </div>
+        <ConditionsCard maxWidth="640px" />
+      </div></div>
+    </div>
+  </section>
+
+  <!-- EMERGENCY BAND -->
+  <section class="emband" style="padding-block:0;">
+    <div class="wrap">
+      <div class="big">Emergency? Call <a class="em911" href="tel:911">911</a></div>
+      <div class="nums">
+        <div><span class="k">Non-emergency &middot; department</span><a href={telHref(phone)}>{phone}</a></div>
+        <div><span class="k">Dispatch &middot; ND State Radio</span><a href={telHref(stateRadio)}>{stateRadio}</a></div>
+      </div>
+    </div>
+  </section>
+
+  <SeasonalTip />
+
+  <!-- WHAT WE RESPOND TO -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">What we do</p>
+        <h2>What we respond to</h2>
+        <p class="muted">The calls that come with protecting a large, rural service area.</p>
+      </div>
+      <div class="cards c4">
+        <div class="card"><div class="pad"><h3 style="font-size:1.15rem">Structure fires</h3><p class="muted" style="font-size:.93rem;margin:.3rem 0 0">Homes, farmsteads, and outbuildings across the district.</p></div></div>
+        <div class="card"><div class="pad"><h3 style="font-size:1.15rem">Grass &amp; wildland fires</h3><p class="muted" style="font-size:.93rem;margin:.3rem 0 0">Fast-moving prairie and field fires, especially in dry, windy conditions.</p></div></div>
+        <div class="card"><div class="pad"><h3 style="font-size:1.15rem">Crashes &amp; rescue</h3><p class="muted" style="font-size:.93rem;margin:.3rem 0 0">Collisions and extrication on rural highways and county roads.</p></div></div>
+        <div class="card"><div class="pad"><h3 style="font-size:1.15rem">Farm &amp; equipment fires</h3><p class="muted" style="font-size:.93rem;margin:.3rem 0 0">Combines, machinery, and harvest-season incidents in the field.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES -->
+  <section style="background:var(--paper-2);border-block:1px solid var(--line);">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">How it works</p>
+        <h2>The district funds it. The department runs it.</h2>
+        <p class="muted">Two parts share the name. Knowing which is which helps at budget and election time.</p>
+      </div>
+      <div class="roles">
+        <div class="role fund">
+          <span class="tag" style="color:var(--gold)">The District &middot; funding</span>
+          <h3>Mandan Rural Fire Protection District</h3>
+          <p class="muted">The public body that pays for fire protection, governed by an elected board.</p>
+          <ul><li>Sets the mill levy and approves the budget</li><li>Owns the stations, trucks, and gear</li><li>Holds public meetings and posts minutes</li></ul>
+          <a href="/district" style="font-family:var(--display);font-weight:600;">District &amp; board &rsaquo;</a>
+        </div>
+        <div class="role ops">
+          <span class="tag" style="color:var(--accent-text)">The Department &middot; operations</span>
+          <h3>Mandan Rural Fire Department</h3>
+          <p class="muted">The volunteers who respond, train, and keep the trucks ready.</p>
+          <ul><li>Answers fire, rescue, and emergency calls</li><li>Trains members and staffs the stations</li><li>Runs prevention and public education</li></ul>
+          <a href="/department" style="font-family:var(--display);font-weight:600;color:var(--accent-text);">Meet the department &rsaquo;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PUBLIC MEETINGS -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Open to the public</p>
+        <h2>District board meetings</h2>
+        <p class="muted">The board meets in the open and posts every agenda and set of minutes. Residents are welcome, and questions about the budget and mill levy are heard here.</p>
+      </div>
+      <VoteCard />
+      {/* The minutes card only exists once minutes do; until then the
+          meeting card takes the full row. */}
+      <div class={recent.length > 0 ? 'split2' : 'lone-card'} style="gap:1.2rem;align-items:stretch;">
+        <NextMeeting compact={true} recordHref="/district#public-record" />
+        {recent.length > 0 && (
+          <div class="card"><div class="pad">
+            <h3 class="kicker" style="margin-bottom:.5rem;">Recent minutes</h3>
+            <ul class="minutes" style="border-top:0;">
+              {recent.map((m) => (
+                <li><a href={`/minutes/${m.slug}`}><time datetime={m.date}>{m.dateLabel}</time><span class="t">{m.title}</span></a></li>
+              ))}
+            </ul>
+            <p style="margin:.8rem 0 0;"><a href="/district#public-record" style="font-family:var(--display);font-weight:600;">All agendas &amp; minutes &rsaquo;</a></p>
+          </div></div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- HAPPENINGS -->
+  {happenings.length > 0 && (
+    <section style="border-top:1px solid var(--line);">
+      <div class="wrap">
+        <div class="sec-head">
+          <p class="eyebrow">Around the department</p>
+          <h2>Recent happenings</h2>
+        </div>
+        <div class="cards c3">
+          {happenings.map((h) => (
+            <article class="happening">
+              <SanityImage image={h.photo} width={700} fallbackLabel="PHOTO" altFallback={h.title} />
+              <div class="cap">
+                <h3>{h.title}</h3>
+                {h.caption && <p>{h.caption}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <RecruitBand />
+</Base>

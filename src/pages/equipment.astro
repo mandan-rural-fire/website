@@ -1,0 +1,177 @@
+---
+import Base from '../layouts/Base.astro';
+import SanityImage from '../components/SanityImage.astro';
+import { getStationsWithApparatus, type Apparatus } from '../lib/sanity';
+
+const stations = await getStationsWithApparatus();
+
+// The fleet renders grouped by station (a subhead per station), so residents
+// see at a glance what runs from where; the total drives the empty state.
+const fleetCount = stations.reduce((n, s) => n + s.apparatus.length, 0);
+
+const directionsHref = (address?: string | null) =>
+  address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : null;
+
+// Photo-less cards get the site's monogram treatment (see the officer
+// cards): the unit's designator, "Engine 1" -> "E1", "Station 2" -> "S2".
+function designator(name: string): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  const letter = parts[0]?.[0]?.toUpperCase() ?? '';
+  const last = parts[parts.length - 1] ?? '';
+  return letter + (/^\d+$/.test(last) ? last : '');
+}
+
+// Which spec rows to show, in order, only when present. No station row:
+// the grouping subhead carries that.
+function specs(a: Apparatus): Array<[string, string]> {
+  const rows: Array<[string, string]> = [];
+  if (a.pumpCapacity) rows.push(['Pump', `${a.pumpCapacity.toLocaleString()} GPM`]);
+  if (a.tankCapacity) rows.push(['Tank', `${a.tankCapacity.toLocaleString()} gal`]);
+  if (a.chassis) rows.push(['Chassis', a.chassis]);
+  if (a.year) rows.push(['Year', String(a.year)]);
+  return rows;
+}
+---
+
+<Base
+  title="Stations & Apparatus | Mandan Rural Fire"
+  description="Stations and apparatus of the Mandan Rural Fire Department, and the tenders that supply water where there are no hydrants."
+>
+  <div class="pagehead">
+    <div class="wrap">
+      <p class="eyebrow">Where we are &amp; what we run</p>
+      <h1>Stations &amp; apparatus</h1>
+      <p class="lead">
+        The stations covering the district, and the apparatus that supplies water where there are no
+        hydrants.
+      </p>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Stations</p><h2>Our stations</h2>
+      </div>
+
+      {
+        stations.length === 0 ? (
+          <p class="muted">Station details coming soon.</p>
+        ) : (
+          <div class="cards c2">
+            {stations.map((s) => {
+              const dir = directionsHref(s.address);
+              return (
+                <article class="card">
+                  {s.photo ? (
+                    <SanityImage
+                      image={s.photo}
+                      width={1100}
+                      fallbackLabel="STATION PHOTO"
+                      altFallback={s.name}
+                    />
+                  ) : (
+                    <div class="card-media" style="aspect-ratio:21/9" aria-hidden="true">
+                      <span class="monogram">{designator(s.name)}</span>
+                    </div>
+                  )}
+                  <div class="pad">
+                    <span class={s.isHeadquarters ? 'badge' : 'badge gold'}>
+                      {s.isHeadquarters ? 'Headquarters' : 'Substation'}
+                    </span>
+                    <h3 style="font-size:1.4rem;margin:.5rem 0 0">{s.name}</h3>
+                    {s.address && (
+                      <p
+                        class="mono"
+                        style="font-size:.86rem;color:var(--text-soft);margin:.3rem 0"
+                      >
+                        {s.address}
+                      </p>
+                    )}
+                    {s.notes && (
+                      <p class="muted" style="margin:.2rem 0 .8rem">
+                        {s.notes}
+                      </p>
+                    )}
+                    {dir && (
+                      <a
+                        class="btn"
+                        style="padding:.5rem .9rem;font-size:.9rem"
+                        href={dir}
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        Get directions
+                      </a>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <section style="background:var(--paper-2);border-top:1px solid var(--line);">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Apparatus</p>
+        <h2>The fleet</h2>
+      </div>
+
+      {
+        fleetCount === 0 ? (
+          <p class="muted">Apparatus details coming soon.</p>
+        ) : (
+          stations.filter((s) => s.apparatus.length > 0).map((s) => (
+            <>
+              <div class="fleet-divider">
+                <h3 class="subhead">{s.name}</h3>
+                <span class="count">{s.apparatus.length} {s.apparatus.length === 1 ? 'unit' : 'units'}</span>
+              </div>
+              <div class="cards c3" style="margin-bottom:2rem;">
+                {s.apparatus.map((a) => (
+                  <article class="card">
+                    {a.photo ? (
+                      <SanityImage
+                        image={a.photo}
+                        width={700}
+                        fallbackLabel="PHOTO"
+                        altFallback={a.name}
+                      />
+                    ) : (
+                      <div class="card-media" style="aspect-ratio:16/10" aria-hidden="true">
+                        <span class="monogram">{designator(a.name)}</span>
+                      </div>
+                    )}
+                    <div class="pad">
+                      {a.unitType && <span class="badge">{a.unitType}</span>}
+                      <h4 style="font-size:1.2rem;margin:.5rem 0 0">{a.name}</h4>
+                      {specs(a).length > 0 && (
+                        <ul class="specs">
+                          {specs(a).map(([k, v]) => (
+                            <li>
+                              <span>{k}</span>
+                              <span>{v}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {a.notes && (
+                        <p class="muted" style="font-size:.9rem;margin:.6rem 0 0">
+                          {a.notes}
+                        </p>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          ))
+        )
+      }
+    </div>
+  </section>
+</Base>

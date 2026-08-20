@@ -1,0 +1,155 @@
+---
+import { DANGER_ORDER, DANGER_COLORS } from '../lib/fire';
+
+interface Props {
+  maxWidth?: string;
+  /** The resources page sets this false: the statewide map sits beside the
+      card there, so a link to /resources would be circular. */
+  mapLink?: boolean;
+}
+const { maxWidth = '640px', mapLink = true } = Astro.props;
+---
+<div class="condcard" style={`max-width:${maxWidth};`} role="region" aria-label="Current fire conditions">
+  <div class="kicker">Current conditions</div>
+  <!-- Two concerns, two bordered groups: the daily rating (with its scale)
+       and what it means for open burning (with the county note). -->
+  <div class="condgroup">
+    <div class="condrow">
+      <span class="k">Fire danger</span>
+      <!-- Honest default: no invented rating. The script below fills in the
+           state's daily county rating once fetched; null means not rated. -->
+      <span class="pill" id="condPill" aria-live="polite" style="background:var(--line)">Not rated today</span>
+    </div>
+    <div class="scale" id="condScale" aria-hidden="true">
+      {DANGER_ORDER.map((level) => <span style={`background:${DANGER_COLORS[level]}`}></span>)}
+    </div>
+    <div class="condnote"><span>Morton County rating, updated daily</span>{mapLink && <a href="/resources">Statewide fire danger map &rsaquo;</a>}</div>
+  </div>
+  <div class="condgroup">
+    <div class="condrow">
+      <span class="k">Open burning</span>
+      <!-- Same pill language as the danger rating; the qualifier and county
+           link live on the note line below, not inside the status. -->
+      <span class="pill" id="condBurn" aria-live="polite" style="background:var(--line)">Check restrictions</span>
+    </div>
+    <div class="condnote" id="condBurnNote" hidden></div>
+  </div>
+</div>
+
+{/* Deferred module scripts run after first paint, so the fallback pills
+    would flash before the loading state lands. This runs synchronously
+    during parse, before paint; the fallback text is stashed for the module
+    below to restore when the fetch brings no data. JS-off visitors never
+    execute either script and keep the honest fallbacks. */}
+<script is:inline data-astro-rerun>
+  for (const id of ['condPill', 'condBurn']) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.dataset.fallback = el.textContent;
+      el.textContent = 'Checking…';
+      el.classList.add('condloading');
+    }
+  }
+</script>
+
+<script>
+  import {
+    fetchFireStatus,
+    openBurning,
+    ND_BURN_RESTRICTIONS_URL,
+    isDangerLevel,
+    DANGER_ORDER,
+    DANGER_COLORS,
+    DANGER_PILL_COLORS,
+    type DangerLevel,
+    type OpenBurning,
+  } from '../lib/fire';
+
+  // Re-initializes after every client-side navigation; the fetch result is
+  // CDN-cached, so repeat visits to the home page stay cheap.
+  document.addEventListener('astro:page-load', () => {
+  const pill = document.getElementById('condPill');
+  const scale = document.getElementById('condScale');
+  const burn = document.getElementById('condBurn');
+
+  if (pill && scale && burn) {
+    const pillEl = pill;
+    const burnEl = burn;
+    const steps = Array.from(scale.querySelectorAll<HTMLSpanElement>('span'));
+
+    const setDanger = (level: DangerLevel): void => {
+      pillEl.textContent = level;
+      pillEl.style.background = DANGER_PILL_COLORS[level];
+      pillEl.style.color = '#fff';
+      const idx = DANGER_ORDER.indexOf(level);
+      steps.forEach((step, i) => step.classList.toggle('on', i <= idx));
+    };
+
+    // 'unknown' keeps the server-rendered "Check restrictions" pill. Pill
+    // colors reuse the danger palette (verified pairs: white on the green
+    // and on --accent-dk both pass AA).
+    const BURN_PILLS: Record<Exclude<OpenBurning, 'unknown'>, { text: string; bg: string }> = {
+      ban: { text: 'Banned', bg: 'var(--accent-dk)' },
+      prohibited: { text: 'Prohibited', bg: 'var(--accent-dk)' },
+      allowed: { text: 'Allowed', bg: DANGER_COLORS.Low },
+    };
+
+    // The inline script above swapped the pills to a pulsing "Checking"
+    // before first paint and stashed the fallback text; that text comes
+    // back on any no-data outcome, so the fallbacks only ever mean
+    // "truly no data". (?? textContent: belt and braces in case the
+    // inline script did not run.)
+    const pillFallback = pillEl.dataset.fallback ?? pillEl.textContent;
+    const burnFallback = burnEl.dataset.fallback ?? burnEl.textContent;
+    pillEl.textContent = 'Checking…';
+    burnEl.textContent = 'Checking…';
+    pillEl.classList.add('condloading');
+    burnEl.classList.add('condloading');
+
+    void fetchFireStatus().then((status) => {
+      pillEl.classList.remove('condloading');
+      burnEl.classList.remove('condloading');
+      if (status && isDangerLevel(status.fireDanger)) setDanger(status.fireDanger);
+      else pillEl.textContent = pillFallback;
+      const state = openBurning(status);
+      if (state === 'unknown') burnEl.textContent = burnFallback;
+      if (state !== 'unknown') {
+        const pill = BURN_PILLS[state];
+        burnEl.textContent = pill.text;
+        burnEl.style.background = pill.bg;
+        burnEl.style.color = '#fff';
+      }
+      // The note explains the pill and links somewhere useful: safe-burning
+      // practices on calm days, the state's restrictions map when burning is
+      // restricted (why, plus where to check).
+      const note = document.getElementById('condBurnNote');
+      if (note && state !== 'unknown') {
+        const restrictions = status?.burnDeclaration?.link ?? ND_BURN_RESTRICTIONS_URL;
+        const reason = status?.redFlag
+          ? 'Red Flag Warning in effect'
+          : isDangerLevel(status?.fireDanger)
+            ? `${status?.fireDanger} fire danger`
+            : 'Fire danger restriction';
+        const notes: Record<Exclude<OpenBurning, 'unknown'>, { text: string; href: string; label: string; external: boolean }> = {
+          allowed: { text: 'Use caution', href: '/prevention#safe-burning', label: 'Safe burning basics ›', external: false },
+          prohibited: { text: reason, href: restrictions, label: 'Current restrictions ›', external: true },
+          ban: { text: 'Morton County burn ban in effect', href: restrictions, label: 'Current restrictions ›', external: true },
+        };
+        const n = notes[state];
+        const text = document.createElement('span');
+        text.textContent = n.text;
+        note.replaceChildren(text);
+        const a = document.createElement('a');
+        a.href = n.href;
+        if (n.external) {
+          a.target = '_blank';
+          a.rel = 'noopener';
+        }
+        a.textContent = n.label;
+        note.append(a);
+        note.hidden = false;
+      }
+    });
+  }
+  });
+</script>

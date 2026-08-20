@@ -1,0 +1,254 @@
+---
+import Base from "../layouts/Base.astro";
+import DocList from "../components/DocList.astro";
+import NextMeeting from "../components/NextMeeting.astro";
+import MapEmbed from "../components/MapEmbed.astro";
+import BoardMemberCard from "../components/BoardMemberCard.astro";
+import VoteCard from "../components/VoteCard.astro";
+import { getSettings, getDistrictFacts, getPastVotes } from "../lib/sanity";
+import { getBoardRoster } from "../lib/content/board";
+import { getMeetingListEntries } from "../lib/content/meetings";
+import { formatDateLabel, FALLBACK_EMAIL, DISTRICT_MAP_EMBED, DISTRICT_MAP_FULL } from "../lib/defaults";
+
+const [settings, facts, roster, entries, pastVotes] = await Promise.all([
+  getSettings(),
+  getDistrictFacts(),
+  getBoardRoster(),
+  getMeetingListEntries(),
+  getPastVotes(),
+]);
+// No fallback: a guessed tax figure is worse than no figure. The sentence
+// adapts when the field is not filled in yet.
+const millRate = facts?.millRate ?? null;
+const boardEmail = settings?.boardEmail ?? settings?.email ?? FALLBACK_EMAIL;
+
+// Officers stay visible; directors collapse behind an expander once the
+// roster is big enough that the card wall costs more than it informs.
+const officers = roster.people.filter((p) => p.isOfficer);
+const directors = roster.people.filter((p) => !p.isOfficer);
+const collapseDirectors = roster.people.length > 6 && officers.length > 0 && directors.length > 0;
+---
+
+<Base
+  title="Fire Protection District and Board | Mandan Rural Fire"
+  description="The Mandan Rural Fire Protection District board, meetings, agendas, minutes, and the mill levy."
+>
+  <div class="pagehead">
+    <div class="wrap">
+      <p class="eyebrow">Governance &amp; funding</p>
+      <h1>District &amp; Board</h1>
+      <p class="lead">
+        The Mandan Rural Fire Protection District is the public body that funds
+        fire protection here. Its meetings are open to everyone.
+      </p>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap" style="max-width:820px;">
+      <VoteCard />
+      <p class="eyebrow">Next meeting</p>
+      <div style="margin-top:.6rem;">
+        <NextMeeting compact={true} kicker="Regular board meeting" recordHref="#public-record" />
+      </div>
+      <p class="muted" style="font-size:.92rem;margin-top:.8rem;">
+        Open to the public. Agendas are posted before each meeting and minutes
+        after.
+      </p>
+    </div>
+  </section>
+
+  <section
+    style="background:var(--paper-2);border-block:1px solid var(--line);"
+  >
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">The elected board</p><h2>Board of directors</h2>
+        <p class="muted">
+          Residents elected to set the budget and the mill levy, and to oversee
+          the district. Most directors represent a township, and seats are
+          elected to two-year terms at the district's annual meeting.
+        </p>
+      </div>
+
+      {
+        roster.empty ? (
+          <p class="muted">Board roster coming soon.</p>
+        ) : (
+          <>
+            {roster.stats.townshipCount > 0 && (
+              <p class="roster-stats">
+                {roster.stats.townshipCount} townships &middot; {roster.stats.seatsFilled} of {roster.stats.seatsTotal} seats filled
+                {roster.stats.seatsOpen > 0 && <> &middot; <span class="open-count">{roster.stats.seatsOpen} open</span></>}
+              </p>
+            )}
+            {roster.people.length > 0 && (
+              <>
+                <div class="cards c3">
+                  {(collapseDirectors ? officers : roster.people).map((m) => (
+                    <BoardMemberCard member={m} />
+                  ))}
+                </div>
+                {collapseDirectors && (
+                  <details class="expander" style="margin-top:1rem;">
+                    <summary>
+                      <span class="exp-more">
+                        <span class="show">Show all {directors.length} directors <span class="chev" aria-hidden="true">&rsaquo;</span></span>
+                        <span class="hide">Hide directors <span class="chev" aria-hidden="true">&rsaquo;</span></span>
+                      </span>
+                    </summary>
+                    <div class="cards c3" style="margin-top:1rem;">
+                      {directors.map((m) => (
+                        <BoardMemberCard member={m} />
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </>
+            )}
+            {roster.townships.length > 0 && (
+              <div>
+                <h3 class="subhead">Seats by township</h3>
+                <details class="expander">
+                  <summary>
+                    <span class="exp-row">
+                      View all {roster.stats.townshipCount} townships &middot; {roster.stats.seatsOpen} open
+                      <span class="chev" aria-hidden="true">&rsaquo;</span>
+                    </span>
+                  </summary>
+                  <div class="seatmap">
+                  <div class="seatmap-row seatmap-head" aria-hidden="true">
+                    <span>Township</span><span>Primary</span><span>Secondary</span>
+                  </div>
+                  {roster.townships.map((t) => (
+                    <div class="seatmap-row">
+                      <span class="t">{t.name}</span>
+                      <span>{t.primary ? <span class="filled">{t.primary.name}</span> : <span class="open">Open</span>}</span>
+                      <span>{t.secondary ? <span class="filled">{t.secondary.name}</span> : <span class="open">Open</span>}</span>
+                    </div>
+                  ))}
+                </div>
+                  <p class="muted" style="font-size:.85rem;margin-top:.7rem;">
+                    Contact info is on the member cards above. Find your township number on the map below.
+                  </p>
+                </details>
+              </div>
+            )}
+          </>
+        )
+      }
+
+      <p class="muted" style="font-size:.9rem;margin-top:1.2rem;">
+        General questions for the board? <a href={`mailto:${boardEmail}`}
+          >{boardEmail}</a>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Representation</p><h2>Find your township</h2>
+        <p class="muted">
+          The district spans several townships in Morton County. Find yours on
+          the map, see who represents it on the board, and check whether a seat
+          is open.
+        </p>
+      </div>
+      <div style="max-width:780px;margin-inline:auto;">
+        <MapEmbed
+          src={DISTRICT_MAP_EMBED}
+          title="Mandan Rural Fire district map"
+          caption="District boundary and townships. Pan, zoom, or use your location to find your township."
+          fullMapUrl={DISTRICT_MAP_FULL}
+        />
+      </div>
+      <div class="callout" style="margin-top:1.2rem;">
+        Want a say in how fire protection is funded here? Directors come from
+        within the district, by township, and many seats are open. Every board
+        meeting is open to the public, and coming to one is the easiest way to
+        learn about taking a seat: just show up and ask. Or <a
+          href={`mailto:${boardEmail}`}>email the board &rsaquo;</a>
+      </div>
+    </div>
+  </section>
+
+  <section
+    style="background:var(--paper-2);border-block:1px solid var(--line);"
+  >
+    <div class="wrap" style="max-width:820px;"><div class="prose">
+      <p class="eyebrow">How we're funded</p>
+      <h2 style="font-size:1.7rem;margin:.3rem 0 .6rem;">
+        The mill levy, in plain terms
+      </h2>
+      <p>
+        The district funds fire protection through a property-tax mill
+        levy{millRate !== null && <>, currently <strong>{millRate} mills</strong></>}.
+        That pays for trucks, gear, station upkeep, and training. The department
+        does not bill residents for emergency response; the levy is how the
+        service is paid for.
+      </p>
+      {/* Time-sensitive funding news lives in the Studio (District facts),
+          so it can be updated the week things change and cleared when it no
+          longer applies. No fallback: stale news is worse than none. */}
+      {facts?.fundingNote && (
+        <div class="callout">
+          {facts.fundingNoteTitle && <strong>{facts.fundingNoteTitle}.</strong>} {facts.fundingNote}
+        </div>
+      )}
+    </div></div>
+  </section>
+
+  <!-- Every agendas-and-minutes link on the site targets this anchor. -->
+  <section id="public-record">
+    <div class="wrap" style="max-width:820px;">
+      <div class="sec-head">
+        <p class="eyebrow">Transparency</p><h2>
+          The public record
+        </h2>
+      </div>
+
+      <h3 class="subhead" style="margin-top:.2rem;">Agendas &amp; minutes</h3>
+      <DocList entries={entries.slice(0, 6)} />
+      {entries.length > 6 && (
+        <details class="expander">
+          <summary>
+            <span class="exp-more">
+              <span class="show">Show {entries.length - 6} earlier meetings <span class="chev" aria-hidden="true">&rsaquo;</span></span>
+              <span class="hide">Hide earlier meetings <span class="chev" aria-hidden="true">&rsaquo;</span></span>
+            </span>
+          </summary>
+          <DocList entries={entries.slice(6)} />
+        </details>
+      )}
+      <p class="muted" style="font-size:.85rem;margin-top:.8rem;">
+        Agendas and minutes are public record. For historical meetings not
+        listed here, <a href={`mailto:${boardEmail}`}>contact the board</a>.
+      </p>
+
+      {pastVotes.length > 0 && (
+        <div>
+          <h3 class="subhead">Past votes</h3>
+          <div class="pastvotes">
+            {pastVotes.map((v) => (
+              <div class="pastvote">
+                <div class="pv-head">
+                  <span class="mono pv-date">{formatDateLabel(v.date ?? '', false)}</span>
+                  <span class="pv-title">{v.title}</span>
+                  {v.outcome && (
+                    <span class={`pv-outcome ${v.outcome}`}>{v.outcome === 'passed' ? 'Passed' : 'Failed'}</span>
+                  )}
+                </div>
+                {v.resultSummary ? (
+                  <p class="pv-result">{v.resultSummary}</p>
+                ) : (
+                  <p class="pv-result muted">Results will be posted here and in the meeting minutes.</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,29 @@
+---
+import type { MeetingEntry } from '../lib/content/meetings';
+
+interface Props {
+  entries: MeetingEntry[];
+  emptyMessage?: string;
+}
+const { entries, emptyMessage = 'Agendas and minutes will appear here as they are posted.' } = Astro.props;
+---
+{entries.length === 0 ? (
+  <p class="muted">{emptyMessage}</p>
+) : (
+  <ul class="doclist">
+    {entries.map((m) => (
+      <li>
+        <time datetime={m.dateIso}>{m.date}</time>
+        <span class="t">{m.title}</span>
+        <span class="docs">
+          {m.agendaUrl
+            ? <a class="doclink" href={m.agendaUrl}>Agenda</a>
+            : <span class="doclink pending">Agenda</span>}
+          {m.minutesUrl
+            ? <a class="doclink mins" href={m.minutesUrl}>Minutes</a>
+            : <span class="doclink mins pending">Minutes</span>}
+        </span>
+      </li>
+    ))}
+  </ul>
+)}

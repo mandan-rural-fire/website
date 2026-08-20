@@ -1,0 +1,23 @@
+---
+/**
+ * The "We need volunteers" band, shared by the home and department pages so
+ * the recruiting pitch stays identical everywhere it appears. Also the only
+ * join prompt phone readers see on interior pages, where the sidebar's
+ * button is hidden.
+ *
+ * `raised` picks the band tone so each page can keep its default/raised
+ * alternation: home ends on a raised band, department on a flat one.
+ */
+interface Props {
+  raised?: boolean;
+}
+const { raised = true } = Astro.props;
+---
+<section style={raised ? 'background:var(--paper-2);border-top:1px solid var(--line);' : undefined}>
+  <div class="wrap" style="text-align:center;max-width:620px;">
+    <p class="eyebrow">Join us</p>
+    <h2 style="font-size:clamp(1.7rem,3.6vw,2.4rem);margin:.3rem 0 .6rem;">We need volunteers</h2>
+    <p class="muted">No experience required. We provide training and gear, and you can work toward Firefighter I and II certification.</p>
+    <a class="btn btn--primary" href="/join" style="margin-top:1rem;">Start your application</a>
+  </div>
+</section>

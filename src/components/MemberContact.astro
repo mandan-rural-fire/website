@@ -1,0 +1,35 @@
+---
+import { telHref, formatPhone } from '../lib/defaults';
+import type { BoardMemberView } from '../lib/content/board';
+
+/**
+ * A board member's contact lines: the preferred method first (tagged when
+ * both exist), each a tappable link. Renders nothing when the member has no
+ * published contact info.
+ */
+interface Props {
+  member: BoardMemberView;
+}
+const { member } = Astro.props;
+
+const email = member.email
+  ? { href: `mailto:${member.email}`, label: member.email, kind: 'email' }
+  : null;
+const phone = member.phone
+  ? { href: telHref(member.phone), label: formatPhone(member.phone), kind: 'phone' }
+  : null;
+
+const lines = [email, phone].filter((l) => l !== null);
+if (lines.length === 2 && member.preferredContact === 'phone') lines.reverse();
+const both = lines.length === 2;
+---
+{lines.length > 0 && (
+  <span class="mono seat-contact">
+    {lines.map((l, i) => (
+      <>
+        <a href={l.href}>{l.label}</a>{both && i === 0 && <span class="pref-tag">preferred</span>}
+        {i < lines.length - 1 && <br />}
+      </>
+    ))}
+  </span>
+)}

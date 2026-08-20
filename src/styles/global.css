@@ -1,0 +1,557 @@
+:root{
+  --bg:#0b1124; --bg-2:#0f1830; --card:#15203f; --card-2:#1b2952;
+  --text:#e9ecf4; --text-soft:#9aa6c0; --line:#27345c;
+  /* --accent is for decoration (borders, badges) and large text on the
+     darkest grounds. Solid fills under white text use --accent-dk (5.5:1);
+     small accent-colored text on cards uses --accent-text (5.2:1). */
+  --accent:#f23b34; --accent-dk:#c92a25; --accent-darker:#a82220; --accent-text:#ff5a4f;
+  --gold:#f5d23a; --navy:#0b1124;
+  --paper-2:#0f1830; --ink-soft:#9aa6c0; --graphite:#1b2952;
+  --display:'Sora',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --maxw:1160px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+/* 1.0625rem = 17px at the default root size, but unlike a hard 17px it
+   scales with the user's browser font-size preference like every other
+   rem on the site. The only px font anywhere, by design. */
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.08;margin:0;font-weight:700;letter-spacing:-.02em;color:#fff;}
+a{color:#fff;}
+img{max-width:100%;display:block;}
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:1.4rem;}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+.skip{position:absolute;left:-999px;background:#fff;color:var(--bg);padding:.6rem 1rem;z-index:200;}
+.skip:focus{left:.5rem;top:.5rem;}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin:0;}
+/* .prose p outranks .eyebrow on specificity; keep section kickers gold and
+   unspaced inside prose sections too. */
+.prose p.eyebrow{color:var(--gold);margin:0;}
+/* Two-tier kickers: gold .eyebrow marks page/section starts; .kicker is the
+   grey mono label INSIDE cards (conditions, meeting, roles, ranks). */
+.kicker{font-family:var(--mono);font-size:.68rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-soft);margin:0;}
+.muted{color:var(--text-soft);}
+.mono{font-family:var(--mono);}
+
+.btn{display:inline-flex;align-items:center;font-family:var(--display);font-weight:600;text-decoration:none;cursor:pointer;
+  padding:.74rem 1.35rem;border-radius:10px;border:1.5px solid rgba(255,255,255,.5);color:#fff;background:transparent;
+  transition:transform .12s,background .12s,border-color .12s;font-size:1rem;letter-spacing:-.01em;}
+.btn--primary{background:var(--accent-dk);border-color:var(--accent-dk);color:#fff;}
+.btn--primary:hover{background:var(--accent-darker);border-color:var(--accent-darker);}
+.btn:hover{transform:translateY(-1px);border-color:#fff;}
+.btn--ghost{border-color:rgba(255,255,255,.5);color:#fff;}
+
+/* Sidebar navigation (Demo 2 structure) */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:#080d1c;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:1.3rem 1rem;z-index:100;overflow-y:auto;}
+.side-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;}
+.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:#fff;margin-bottom:1.4rem;}
+.logo{height:46px;width:auto;display:block;}
+.shield{display:none;}
+.brand .name{font-family:var(--display);font-weight:700;line-height:1.05;font-size:1rem;letter-spacing:-.02em;color:#fff;white-space:nowrap;}
+.brand .sub{font-family:var(--mono);font-weight:400;font-size:.58rem;letter-spacing:.08em;color:var(--text-soft);}
+nav.primary{display:flex;flex-direction:column;gap:.15rem;font-family:var(--body);font-weight:500;font-size:1rem;}
+nav.primary a{text-decoration:none;color:var(--text-soft);padding:.55rem .65rem;border-radius:9px;border-left:3px solid transparent;}
+nav.primary a:hover{background:var(--card);color:#fff;}
+nav.primary a[aria-current="page"]{background:var(--card);color:#fff;border-left-color:var(--accent);}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:.8rem;padding-top:1.4rem;}
+.side-911{font-family:var(--mono);font-size:.8rem;color:var(--text-soft);}
+.side-911 strong{color:var(--accent);font-family:var(--display);font-size:1.05rem;}
+.navtoggle{display:none;font-family:var(--display);font-weight:600;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:8px;padding:.35rem .6rem;cursor:pointer;color:#fff;}
+main,footer.site{margin-left:250px;}
+
+/* HERO: photo-forward with a clear placeholder */
+/* No bottom padding: the red emergency band is the hero's hard boundary. */
+.hero{position:relative;color:#fff;padding:0;}
+.hero-photo{position:relative;min-height:60vh;display:flex;align-items:flex-end;overflow:hidden;
+  background:linear-gradient(120deg,#0a1026,#14224c 55%,#3a1d2a);}
+/* Without a photo there is nothing to leave room for: the box hugs its text
+   instead of pinning it to the bottom of a 60vh area. */
+.hero-photo.no-photo{min-height:0;}
+.hero-photo.no-photo .hero-cap{padding-block:3.2rem 2.4rem;}
+/* Text left, live conditions card right on wide screens; stacked otherwise.
+   The sidebar eats 250px, so the two-column hero needs real width before the
+   headline stops getting crushed. */
+.hero-grid{display:grid;grid-template-columns:1fr;gap:0 3rem;align-items:end;}
+@media(min-width:1360px){ .hero-grid{grid-template-columns:1fr 420px;} }
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.hero-photo::before{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(120% 80% at 80% 12%, rgba(242,59,52,.18), transparent 60%);}
+.hero-photo::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg, rgba(8,12,26,.12) 38%, rgba(8,12,26,.92));}
+.hero-cap{position:relative;z-index:2;width:100%;padding-block:2.4rem;}
+.hero-cap .eyebrow{color:var(--gold);}
+.hero h1{font-size:clamp(2.4rem,5.6vw,4.3rem);font-weight:800;letter-spacing:-.035em;line-height:1.0;margin:.5rem 0;color:#fff;}
+.hero .lead{font-size:1.18rem;color:#dde2ee;max-width:46ch;}
+.ctas{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.5rem;}
+
+/* Conditions card (below hero) */
+.condcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.2rem 1.3rem;margin-top:1.7rem;}
+.condrow{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.35rem 0;}
+/* Group borders separate the concerns; rows themselves carry no rules. */
+.condgroup{padding:.45rem 0;}
+.condgroup + .condgroup{border-top:1px solid var(--line);}
+.condrow .k{font-size:.92rem;color:#cfd6e6;}
+.condrow .pill{font-family:var(--display);font-weight:600;color:#fff;padding:.14rem .6rem;border-radius:7px;font-size:.85rem;}
+/* Fetch-in-progress pulse for the live fire-status cards. Applied (and the
+   "Checking" copy set) by script only, so JS-off visitors keep the honest
+   server-rendered fallbacks; reduced-motion users get static text via the
+   global animation override. */
+@keyframes cond-pulse{50%{opacity:.45;}}
+.condloading{animation:cond-pulse 1.2s ease-in-out infinite;}
+.condrow .v{font-family:var(--display);font-weight:600;color:#fff;text-align:right;}
+.scale{display:flex;gap:.22rem;margin-top:.5rem;}
+.scale span{flex:1;height:7px;border-radius:2px;opacity:.3;}
+.scale span.on{opacity:1;}
+/* Two unbreakable units (source text, link): one line when they fit,
+   a clean stack when they don't, never a mid-phrase break. */
+.condnote{font-family:var(--mono);font-size:.7rem;color:var(--text-soft);padding:.35rem 0 .1rem;
+  display:flex;justify-content:space-between;flex-wrap:wrap;column-gap:1rem;row-gap:.15rem;}
+.condnote span{white-space:nowrap;}
+.condnote a{color:var(--gold);white-space:nowrap;}
+
+/* Sections */
+section{padding-block:3.6rem;}
+/* Interior page headers reuse the home hero's gradient (same angles and
+   stops, same red glow) so every page opens in the same visual world. The
+   top layer settles the sweep into a calm dark tone before the border, so
+   the band ends deliberately at the line instead of chopping mid-sweep. */
+.pagehead{
+  background:
+    linear-gradient(180deg, rgba(14,22,46,0) 40%, #0e162e 96%),
+    radial-gradient(120% 130% at 80% 0%, rgba(242,59,52,.16), transparent 60%),
+    linear-gradient(120deg,#0a1026,#14224c 55%,#3a1d2a);
+  border-bottom:1px solid var(--line);
+}
+.pagehead .wrap{padding-block:3rem;}
+.pagehead h1{font-size:clamp(2.1rem,5vw,3.2rem);margin:.3rem 0;}
+.sec-head{margin-bottom:1.8rem;max-width:62ch;}
+.sec-head h2{font-size:clamp(1.7rem,3.6vw,2.4rem);margin-top:.25rem;}
+.prose{max-width:820px;}
+.prose p{margin:0 0 1rem;color:#d7dcea;}
+
+/* Stats */
+/* auto-fit, not a fixed 4: tiles hide when their CMS field is empty. */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.4rem;}
+.stat .n{font-family:var(--display);font-weight:800;font-size:2.5rem;line-height:1;letter-spacing:-.03em;color:#fff;}
+.stat .l{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft);margin-top:.4rem;}
+
+/* Upcoming vote: the gold-edged civic call to action, distinct from the
+   red emergency banners and the accent-edged meeting card. */
+.votes{display:grid;gap:1rem;margin-bottom:1.6rem;}
+.votecard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:16px;padding:1.3rem 1.4rem;max-width:760px;}
+.votecard .vc-date{font-family:var(--display);font-weight:700;font-size:1.35rem;color:#fff;margin:.25rem 0 .1rem;}
+.votecard .vc-title{font-size:1.05rem;margin:0 0 .45rem;color:var(--gold);}
+.votecard .vc-summary{margin:0;color:#d7dcea;font-size:.95rem;}
+.votecard .vc-info{font-size:.8rem;color:var(--text-soft);margin:.6rem 0 0;line-height:1.7;white-space:pre-line;}
+.votecard .vc-link{display:inline-block;margin-top:.7rem;font-family:var(--display);font-weight:600;color:var(--gold);}
+
+/* Prevention: jump chips and tip cards. Chip = button-weight link; card
+   bullets take the accent dot from the original design. */
+.jumpnav{display:flex;flex-wrap:wrap;gap:.6rem;}
+.jumpchip{font-family:var(--display);font-weight:600;font-size:.95rem;color:#fff;text-decoration:none;
+  border:1px solid var(--line);border-radius:10px;padding:.5rem 1rem;transition:border-color .15s,background .15s;}
+.jumpchip:hover{border-color:var(--text-soft);background:var(--card);}
+.tipcards h3{font-size:1.15rem;margin:0 0 .5rem;}
+.tipcards .points{margin:0;padding-left:1.15rem;color:#d7dcea;font-size:.95rem;}
+.tipcards .points li{margin:.4rem 0;}
+.tipcards .points li::marker{color:var(--accent-text);}
+.tipcards .cardtext{margin:0 0 .6rem;color:#d7dcea;font-size:.95rem;line-height:1.55;}
+.tipcards .cardtext:last-child{margin-bottom:0;}
+
+/* Resources: conditions card beside the declaration card (its list flows in
+   two columns when the card is wide), then the state's daily fire danger
+   PNG full-width below so county labels are readable. The activity list is
+   painted by its page-load script, so the server-rendered state is a safe
+   generic. */
+/* Thresholds here are sidebar-aware: the 250px sidebar eats viewport, so a
+   "wide" viewport can still mean a narrow content column. Cards go side by
+   side only when the declaration card gets real room. */
+.fireduo{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:1.5rem;align-items:start;}
+@media(max-width:1099px){ .fireduo{grid-template-columns:1fr;} }
+.fireduo .condcard{margin-top:0;}
+/* Clickable card, so it takes the a.card affordance. No white pre-fill
+   behind the image: the PNG carries its own, and on failure the alt/fallback
+   must sit on card colors, not a white void. */
+.statemap{display:block;text-decoration:none;transition:transform .14s,border-color .14s;margin-top:1.5rem;}
+.statemap:hover{transform:translateY(-3px);border-color:var(--accent);}
+.statemap img{display:block;width:100%;height:auto;}
+.statemap .mapfallback{display:block;padding:2.2rem 1.4rem;color:var(--text-soft);font-size:.95rem;}
+/* Both carry explicit display, which beats the UA [hidden] rule; restore it. */
+.statemap img[hidden],.statemap .mapfallback[hidden]{display:none;}
+.statemap .cap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.statemap .cta{color:var(--gold);white-space:nowrap;}
+.actcard .actintro{font-size:.92rem;margin:.3rem 0 .6rem;}
+/* Fine print in the footer's own type voice (see .condnote), after the
+   status line so today's verdict reads first. */
+.actcard .actlegal{font-family:var(--mono);font-size:.7rem;color:var(--text-soft);line-height:1.6;margin:.3rem 0 0;}
+.actlist{list-style:none;margin:.2rem 0 .6rem;padding:0;}
+/* A step below the conditions card's .92rem row labels: this list is the
+   fine print, the chips already carry the smaller tier. */
+.actlist li{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.88rem;color:#d7dcea;}
+.actlist li:last-child{border-bottom:0;}
+/* Wide declaration card: the list flows in two columns; the borderless
+   last-child would make the column bottoms asymmetric there, so every row
+   keeps its rule line. (Must follow the base rules to win the cascade.) */
+@media(min-width:881px){
+  .actlist{columns:2;column-gap:2.2rem;}
+  .actlist li{break-inside:avoid;}
+  .actlist li:last-child{border-bottom:1px solid var(--line);}
+}
+/* In this band the fireduo is side by side but the declaration card is too
+   narrow for two columns (the sidebar eats 250px of any viewport). */
+@media(min-width:1100px) and (max-width:1279px){
+  .actlist{columns:1;}
+  .actlist li:last-child{border-bottom:0;}
+}
+/* Same badge language as .pv-outcome: status chips are mono, uppercase, 6px. */
+.acttag{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.16rem .5rem;border-radius:6px;white-space:nowrap;color:#fff;background:var(--line);}
+.acttag.no{background:var(--accent-dk);}
+.acttag.ok{background:#3c7a47;}
+/* External link cards (More resources): h4 because they sit under a .subhead
+   h3; the gold domain line is the trust signal for official sources. */
+.linkcards h4{font-family:var(--display);font-size:1.05rem;margin:0 0 .3rem;color:#fff;line-height:1.25;}
+.linkcards .card p{font-size:.9rem;margin:0 0 .55rem;color:var(--text-soft);}
+.linkcards .dom{font-family:var(--mono);font-size:.68rem;color:var(--gold);}
+
+/* Department mission: a statement band, display type doing the work. */
+.mission{font-family:var(--display);font-weight:600;font-size:clamp(1.25rem,2.4vw,1.7rem);line-height:1.4;letter-spacing:-.01em;color:#fff;max-width:920px;margin:.5rem 0 0;text-wrap:balance;}
+
+/* Subsection heading: the tier between kickers and section h2s, for named
+   blocks inside a section (Agendas & minutes / Past votes / Seats by
+   township). */
+.subhead{font-family:var(--display);font-weight:600;font-size:1.15rem;color:#fff;margin:2.4rem 0 .7rem;}
+/* Station group header on the fleet: the subhead alone drowns next to the
+   card grid (its 1.15rem sits below the cards' 1.2rem unit names), so the
+   group boundary is a labeled divider: name, unit count, rule to the edge. */
+.fleet-divider{display:flex;align-items:center;gap:.9rem;margin:2.4rem 0 1rem;}
+.fleet-divider .subhead{margin:0;}
+.fleet-divider .count{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft);white-space:nowrap;}
+.fleet-divider::after{content:"";flex:1;border-top:1px solid var(--line);}
+
+/* Native disclosure for long reference blocks: no JS, keyboard and screen
+   reader support for free. Headings stay OUTSIDE summary (which has an
+   implicit button role that flattens them in screen readers). */
+.expander summary{cursor:pointer;list-style:none;}
+.expander summary::-webkit-details-marker{display:none;}
+/* Button-styled disclosure row, unmistakably a control. */
+.exp-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;max-width:760px;
+  border:1px solid var(--line);border-radius:10px;padding:.6rem .95rem;
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.05em;color:var(--text-soft);
+  transition:border-color .15s,color .15s;}
+.expander summary:hover .exp-row{border-color:var(--text-soft);color:#fff;}
+.exp-row .chev{font-family:var(--display);font-weight:700;font-size:1rem;color:var(--gold);transition:transform .15s;}
+.expander[open] .exp-row .chev{transform:rotate(90deg);}
+.expander .seatmap{margin-top:.9rem;}
+/* Text-style expander trigger: labels crossfade, chevron rotates open,
+   content eases in. Each label carries its own trailing chevron and the
+   whole unit fades as one, so the arrow always hugs the visible text.
+   Both units share one grid cell: the trigger keeps the width of the
+   longer label and nothing reflows on toggle; visibility (not display)
+   keeps the hidden label out of the accessible name while still letting
+   opacity animate. Reduced-motion users get instant states via the
+   global override. */
+.exp-more{display:inline-grid;font-family:var(--mono);font-size:.75rem;letter-spacing:.05em;color:var(--gold);padding:.7rem 0 .2rem;}
+.exp-more .chev{font-family:var(--display);font-weight:700;font-size:1rem;transition:transform .15s;}
+.expander[open] .exp-more .chev{transform:rotate(90deg);}
+.exp-more .show,.exp-more .hide{grid-area:1/1;justify-self:start;display:inline-flex;align-items:center;gap:.45rem;transition:opacity .18s ease,transform .18s ease,visibility .18s;}
+.exp-more .hide{opacity:0;visibility:hidden;transform:translateY(5px);}
+.expander[open] .exp-more .show{opacity:0;visibility:hidden;transform:translateY(-5px);}
+.expander[open] .exp-more .hide{opacity:1;visibility:visible;transform:none;}
+.expander summary:hover .exp-more{color:#fff;}
+@keyframes exp-in{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+.expander[open] > :not(summary){animation:exp-in .18s ease-out;}
+
+/* Past votes: the civic record. Outcome chips reuse the verified pill
+   pairs (white on the Low green and on --accent-dk both pass AA). */
+.pastvotes{border-top:1px solid var(--line);max-width:760px;}
+.pastvote{padding:.8rem 0;border-bottom:1px solid var(--line);}
+.pastvote .pv-head{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;}
+.pastvote .pv-date{font-size:.78rem;color:var(--text-soft);}
+.pastvote .pv-title{font-family:var(--display);font-weight:600;color:#fff;}
+/* The head row aligns by baseline (right for date + title), which would
+   hang this chip's padded box low; the chip centers itself instead. */
+.pv-outcome{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.16rem .5rem;border-radius:6px;color:#fff;align-self:center;}
+.pv-outcome.passed{background:#3c7a47;}
+.pv-outcome.failed{background:var(--accent-dk);}
+.pastvote .pv-result{margin:.35rem 0 0;font-size:.9rem;color:#d7dcea;max-width:64ch;}
+
+/* Board roster: township cards with primary/secondary seat rows. */
+.roster-stats{font-family:var(--mono);font-size:.8rem;color:var(--text-soft);margin:0 0 1.2rem;}
+.roster-stats .open-count{color:var(--gold);}
+.seat-contact{font-size:.8rem;line-height:1.7;}
+/* Quietest member of the chip family (see .badge, .al-tag): outlined, not
+   filled, because it is metadata beside a link, not a status. */
+.pref-tag{display:inline-block;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-soft);border:1px solid var(--line);border-radius:5px;padding:.06rem .35rem;margin-left:.5rem;vertical-align:middle;}
+/* The seat map: one thin row per township. Filled names pop; Open stays
+   muted so the people, not the vacancies, carry the visual weight. */
+.seatmap{border-top:1px solid var(--line);max-width:760px;}
+.seatmap-row{display:grid;grid-template-columns:110px 1fr 1fr;gap:.8rem;padding:.42rem 0;border-bottom:1px solid var(--line);font-size:.9rem;align-items:baseline;}
+.seatmap-row .t{font-family:var(--mono);font-size:.82rem;color:var(--text-soft);}
+.seatmap-head{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-soft);}
+.seatmap .filled{font-family:var(--display);font-weight:600;color:#fff;}
+.seatmap .open{color:var(--text-soft);font-size:.85rem;}
+@media(max-width:540px){ .seatmap-row{grid-template-columns:84px 1fr 1fr;gap:.5rem;} }
+
+/* Roles */
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+.role{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.6rem;}
+.role.fund{border-top:4px solid var(--gold);}
+.role.ops{border-top:4px solid var(--accent);}
+.role .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;}
+.role h3{font-size:1.4rem;margin:.45rem 0 .2rem;}
+.role ul{margin:.7rem 0 .9rem;padding-left:1.15rem;color:#d7dcea;}
+.role li{margin:.35rem 0;}
+.role a{color:var(--gold);}
+
+/* Cards */
+.cards{display:grid;gap:1.2rem;}
+.c2{grid-template-columns:repeat(2,1fr);}
+.c3{grid-template-columns:repeat(3,1fr);}
+.c4{grid-template-columns:repeat(4,1fr);}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+/* Hover affordance only where a card IS a link; static cards must not invite clicks. */
+a.card{transition:transform .14s,border-color .14s;}
+a.card:hover{transform:translateY(-3px);border-color:var(--accent);}
+.card .pad{padding:1.25rem;}
+.card h3{color:#fff;}
+.card p{color:var(--text-soft);}
+a.card{text-decoration:none;color:inherit;display:block;}
+/* Officer card media: a fixed-ratio band so rows stay uniform whether a
+   card holds a photo (cover-cropped) or the monogram fallback. */
+.card-media{aspect-ratio:4/3;background:linear-gradient(135deg,#1b2952,#0d1430);display:grid;place-items:center;overflow:hidden;}
+.card-media img{width:100%;height:100%;object-fit:cover;display:block;}
+.monogram{width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--line);
+  display:grid;place-items:center;color:var(--text-soft);font-family:var(--display);font-weight:700;font-size:1.45rem;letter-spacing:.02em;}
+.photo-ph{aspect-ratio:16/10;background:repeating-linear-gradient(45deg,#141d3a,#141d3a 12px,#101830 12px,#101830 24px);display:grid;place-items:center;color:#6b76a0;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;}
+.badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:var(--bg);padding:.2rem .5rem;border-radius:6px;}
+.badge.gold{background:var(--gold);color:#3a2c00;}
+.specs{list-style:none;margin:.7rem 0 0;padding:0;font-family:var(--mono);font-size:.82rem;color:var(--text-soft);}
+.specs li{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:.34rem 0;}
+.specs li:first-child{border-top:0;}
+
+/* Happenings */
+.happening{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--card);}
+.happening .photo-ph{aspect-ratio:4/3;}
+.happening .cap{padding:1rem 1.1rem;}
+.happening .cap h3{font-size:1.1rem;color:#fff;}
+.happening .cap p{margin:.25rem 0 0;color:var(--text-soft);font-size:.92rem;}
+
+/* Safety info + FAQ */
+.info{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;}
+.info .block{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.4rem;}
+.info .block h3{font-size:1.25rem;margin-bottom:.35rem;color:#fff;}
+.info .block p{margin:0;color:var(--text-soft);}
+.checklist{list-style:none;margin:.5rem 0 0;padding:0;color:#d7dcea;}
+.checklist li{padding-left:1.6rem;position:relative;margin:.45rem 0;}
+.checklist li::before{content:"";position:absolute;left:0;top:.55em;width:.55rem;height:.55rem;background:var(--accent);border-radius:50%;}
+details.faq{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;padding:0 1.2rem;}
+details.faq summary{cursor:pointer;font-family:var(--display);font-weight:600;font-size:1.08rem;padding:1.1rem 0;list-style:none;color:#fff;}
+details.faq summary::-webkit-details-marker{display:none;}
+details.faq summary::after{content:"+";float:right;color:var(--gold);font-weight:700;}
+details.faq[open] summary::after{content:"\2212";}
+details.faq p{margin:0 0 1.1rem;color:var(--text-soft);}
+
+/* Status banner (safety page) */
+.statusbox{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;border-radius:16px;padding:1.2rem 1.4rem;color:#fff;}
+.statusbox .big{font-family:var(--display);font-weight:700;font-size:1.4rem;letter-spacing:-.02em;}
+
+/* District / minutes */
+.nextmtg{font-family:var(--mono);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.4rem;color:var(--text);max-width:760px;}
+.nextmtg .big{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:-.02em;color:#fff;}
+.minutes{list-style:none;margin:0;padding:0;border-top:1px solid var(--line);}
+.minutes li{border-bottom:1px solid var(--line);}
+.minutes a{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap;padding:1.05rem .3rem;text-decoration:none;color:var(--text);}
+.minutes a:hover{background:var(--card);}
+/* Wide enough for the longest date ("September 30, 2026") so titles align
+   regardless of month-name length. */
+.minutes time{font-family:var(--mono);font-size:.82rem;color:var(--gold);min-width:9.5rem;}
+.minutes .t{font-family:var(--display);font-weight:600;font-size:1.08rem;color:#fff;}
+/* agendas + minutes list: two document links per meeting */
+.doclist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line);}
+.doclist li{display:flex;gap:.6rem 1rem;align-items:center;flex-wrap:wrap;padding:1.05rem .3rem;border-bottom:1px solid var(--line);}
+.doclist time{font-family:var(--mono);font-size:.82rem;color:var(--gold);min-width:9.5rem;}
+.doclist .t{font-family:var(--display);font-weight:600;font-size:1.08rem;color:#fff;flex:1 1 12rem;}
+.doclist .docs{display:flex;gap:.5rem;align-items:center;margin-left:auto;}
+.doclink{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;white-space:nowrap;padding:.32rem .62rem;border-radius:6px;border:1px solid var(--line);color:var(--text-soft);transition:background .15s,color .15s,border-color .15s;}
+.doclink:hover{background:var(--card);color:#fff;border-color:var(--text-soft);}
+.doclink.mins{border-color:var(--gold);color:var(--gold);}
+.doclink.mins:hover{background:var(--gold);color:var(--bg);border-color:var(--gold);}
+/* Pending chips: dimmer than live links but still AA (5.4:1 grey, 6.9:1
+   gold on the page bg; the old opacity dimming measured 2.5-3.4:1). */
+.doclink.pending{border-style:dashed;cursor:default;color:#7d89a6;border-color:#3a4666;}
+.doclink.mins.pending{color:#b59c2f;border-color:#6e5f1e;}
+/* Pending chips are not links; don't light up on hover like one. */
+.doclink.pending:hover{background:transparent;color:#7d89a6;border-color:#3a4666;}
+.doclink.mins.pending:hover{color:#b59c2f;border-color:#6e5f1e;}
+.roster{list-style:none;margin:0;padding:0;}
+.roster li{padding:.55rem 0;border-bottom:1px solid var(--line);}
+.roster .role-l{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;color:var(--text-soft);display:block;}
+
+/* Form */
+.note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:.95rem 1.1rem;font-size:.92rem;margin:1.1rem 0 1.4rem;color:#d7dcea;}
+.field{display:block;margin-bottom:1rem;font-weight:600;font-size:.93rem;color:#fff;}
+.field[hidden]{display:none;} /* explicit display beats the UA [hidden] rule */
+/* Helper line tucked under its field (the district-map link). */
+.field-help{font-size:.85rem;margin:-.5rem 0 1rem;}
+.field-help a{color:var(--gold);}
+/* Field borders are the component boundary (the fill is near-identical to
+   the page), so WCAG 1.4.11 wants them at 3:1 against every adjacent
+   surface: #5a6d9f measures 3.53 vs the fill, 3.68 vs the page, 3.15 vs
+   cards. --line (1.48 vs fill) stays for decorative rules only. */
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:.4rem;padding:.7rem .8rem;border:1px solid #5a6d9f;border-radius:10px;font:inherit;background:#0d1530;color:#fff;}
+/* Border tint plus the global gold :focus-visible ring; never suppress it. */
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
+.success{display:none;background:#10502f;color:#fff;border-radius:14px;padding:1.1rem;font-weight:600;}
+
+.callout{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;font-size:.95rem;color:#d7dcea;}
+.ph-flag{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;color:#0b1124;background:var(--gold);border-radius:4px;padding:.08rem .4rem;}
+
+/* Emergency band */
+.emband{background:var(--accent-dk);color:#fff;}
+.emband .wrap{display:flex;align-items:center;justify-content:space-between;gap:1.6rem;flex-wrap:wrap;padding-block:1.4rem;}
+.emband .big{font-family:var(--display);font-weight:700;font-size:clamp(1.3rem,3vw,1.85rem);color:#fff;display:flex;align-items:center;gap:.7rem;}
+/* 911 renders as a tel: link (tapping opens the dialer, never auto-calls)
+   but keeps its badge/text look; the dialer affordance is the number
+   itself, not link styling. */
+.em911{background:#0b1124;color:#fff;border-radius:9px;padding:.06rem .65rem;text-decoration:none;}
+.side-911 a{text-decoration:none;}
+.emband .nums{display:flex;gap:1.8rem;flex-wrap:wrap;font-family:var(--mono);}
+.emband .nums .k{display:block;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.92);margin-bottom:.1rem;}
+.emband .nums a{color:#fff;text-decoration:none;font-size:1.05rem;font-weight:500;}
+
+/* Floating CTA */
+.fab{position:fixed;right:1.1rem;bottom:1.1rem;z-index:120;display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--accent);color:#fff;font-family:var(--display);font-weight:600;text-decoration:none;
+  padding:.8rem 1.25rem;border-radius:999px;box-shadow:0 12px 32px -8px rgba(242,59,52,.6);
+  transform:translateY(160%);opacity:0;transition:transform .25s,opacity .25s;}
+.fab.show{transform:none;opacity:1;}
+.fab:hover{background:var(--accent-dk);}
+
+/* Seasonal tip */
+.tipcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.6rem 1.7rem;}
+.tiphead{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.4rem;}
+.tiphead a{font-family:var(--display);font-weight:600;font-size:.92rem;text-decoration:none;color:var(--gold);}
+.tiptext{font-family:var(--display);font-weight:600;font-size:clamp(1.25rem,2.6vw,1.7rem);letter-spacing:-.02em;line-height:1.22;margin:.2rem 0 0;color:#fff;}
+.tipdots{display:flex;gap:.45rem;margin-top:1.1rem;}
+.tipdots button{width:.6rem;height:.6rem;border-radius:50%;border:0;background:var(--line);cursor:pointer;padding:0;}
+.tipdots button[aria-current="true"]{background:var(--accent);}
+.tipgrid{display:grid;grid-template-columns:1.4fr .9fr;gap:1.6rem;align-items:center;}
+.tipbody{min-width:0;}
+.tipimg{border-radius:12px;aspect-ratio:4/3;}
+
+/* Embeds + resource links */
+.embed{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);}
+/* Dark loading state: without this, third-party map iframes paint as a
+   giant white slab in the dark page until their content arrives. */
+.embed iframe{display:block;width:100%;border:0;background:var(--card-2);color-scheme:dark;}
+.embed .cap{padding:.7rem 1rem;border-top:1px solid var(--line);font-size:.86rem;color:var(--text-soft);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.embed .cap a{color:var(--gold);}
+/* Map scroll guard (see MapEmbed.astro). All devices: a locked iframe
+   would otherwise swallow touch swipes AND touchpad wheel scrolls, dead-
+   zoning the page wherever the map sits. */
+.mapguard{position:relative;}
+.mapguard iframe{pointer-events:none;}
+.mapguard.active iframe{pointer-events:auto;}
+.mapguard-toggle{display:block;position:absolute;left:50%;bottom:.9rem;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--mono);font-size:.75rem;letter-spacing:.05em;color:#fff;
+  background:rgba(10,14,26,.82);border:1px solid var(--line);border-radius:999px;padding:.55rem 1rem;cursor:pointer;}
+.mapguard-toggle:hover{border-color:var(--text-soft);}
+.mapguard-toggle .when-active,.mapguard.active .mapguard-toggle .when-locked{display:none;}
+.mapguard.active .mapguard-toggle .when-active{display:inline;}
+.mapph{aspect-ratio:16/9;background:repeating-linear-gradient(45deg,#141d3a,#141d3a 12px,#101830 12px,#101830 24px);display:grid;place-items:center;text-align:center;color:#7b86b0;font-family:var(--mono);font-size:.78rem;padding:1rem;}
+.reslinks{list-style:none;margin:0;padding:0;display:grid;gap:.7rem;}
+.reslinks a{display:flex;justify-content:space-between;gap:1rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1rem 1.2rem;text-decoration:none;color:var(--text);}
+.reslinks a:hover{border-color:var(--accent);}
+.reslinks .arr{color:var(--accent);font-family:var(--display);font-weight:700;}
+.reslinks .d{display:block;font-size:.88rem;color:var(--text-soft);margin-top:.15rem;font-family:var(--body);font-weight:400;}
+.reslinks .t{font-family:var(--display);font-weight:600;color:#fff;}
+
+/* Alert banner */
+.alertbanner{background:var(--accent-dk);color:#fff;}
+.alertbanner.burnban{background:#b45309;}
+.alertbanner .wrap{display:flex;align-items:center;gap:.9rem;padding-block:.7rem;flex-wrap:wrap;}
+.al-tag{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--display);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;background:rgba(0,0,0,.28);padding:.28rem .65rem;border-radius:8px;white-space:nowrap;}
+.al-msg{font-size:.95rem;flex:1;min-width:220px;}
+.al-msg a{color:#fff;font-weight:600;white-space:nowrap;}
+.al-x{margin-left:auto;background:none;border:0;color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .3rem;border-radius:6px;}
+.al-x:hover{background:rgba(0,0,0,.22);}
+/* When the message wraps on small screens, anchor the dismiss to the top
+   right instead of floating beside the wrapped lines. */
+@media(max-width:640px){ .al-x{align-self:flex-start;} }
+
+/* Footer */
+footer.site{background:#080d1c;color:var(--text-soft);border-top:1px solid var(--line);}
+footer.site .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:2rem;padding-block:2.8rem;}
+/* Between one-column phones and four-up desktop, auto-fit lands on three
+   columns and orphans the fourth cell; pin a balanced 2x2 instead. */
+@media(min-width:600px) and (max-width:950px){ footer.site .grid{grid-template-columns:1fr 1fr;} }
+/* The email address is longer than a narrow footer column; let it break
+   rather than overflow the page. */
+footer.site .grid p{overflow-wrap:anywhere;}
+/* The email breaks only at its <wbr> after the @, never mid-token. */
+footer.site .grid a.email{overflow-wrap:normal;}
+/* Phone numbers and address lines wrap as whole units. */
+footer.site a[href^="tel:"]{white-space:nowrap;}
+footer.site .addr{white-space:nowrap;}
+/* Column headers are real headings so screen readers can jump between them;
+   styled like labels, not page headings. */
+footer.site .grid h2{font-family:var(--display);font-size:1rem;color:var(--gold);display:block;margin:0 0 .4rem;font-weight:600;letter-spacing:0;line-height:1.6;}
+footer.site a{color:var(--text-soft);}
+footer .legal{border-top:1px solid var(--line);padding-block:1.1rem;font-family:var(--mono);font-size:.72rem;color:var(--text-soft);
+  display:flex;flex-direction:column;gap:.4rem;align-items:center;text-align:center;}
+
+.view{display:none}.view.active{display:block}
+
+section[id]{scroll-margin-top:1rem;}
+@media(max-width:980px){
+  .sidebar{position:sticky;top:0;left:auto;right:auto;bottom:auto;width:auto;height:auto;flex-direction:column;padding:.7rem 1rem;overflow:visible;}
+  .side-top{display:flex;align-items:center;justify-content:space-between;width:100%;}
+  .brand{margin-bottom:0;}
+  nav.primary{display:none;margin-top:.7rem;}
+  nav.primary.open{display:flex;}
+  .side-foot{display:none;}
+  .navtoggle{display:inline-block;}
+  .brand .name{font-size:.9rem;}
+  .brand .sub{display:none;}
+  .logo{height:36px;}
+  main,footer.site{margin-left:0;}
+  /* The bar above is ~58px and fixed; without this an anchor jump parks the
+     section's eyebrow a few px under it. */
+  section[id]{scroll-margin-top:70px;}
+}
+/* Two-column split that stacks on small screens. gap set per use. */
+.split2{display:grid;grid-template-columns:1fr 1fr;}
+/* Capped-width cards center in their band instead of leaning left: the
+   conditions card when the hero stacks (in the two-column hero its column
+   is narrower than the cap, so this is a no-op), and the meeting card
+   while it has no minutes-card sibling. */
+.hero-grid .condcard{margin-inline:auto;}
+.lone-card .nextmtg{margin-inline:auto;}
+
+@media(max-width:880px){
+  .roles,.info,.tipgrid,.split2{grid-template-columns:1fr;}
+  .c3,.c4,.stats{grid-template-columns:1fr 1fr;}
+  .emband .wrap{flex-direction:column;align-items:flex-start;gap:.9rem;}
+}
+@media(max-width:540px){
+  .c2,.c3,.c4,.stats{grid-template-columns:1fr;}
+  /* Long live values (the open-burning status) drop to their own line
+     instead of squeezing beside the label. */
+  .condrow{flex-wrap:wrap;row-gap:.15rem;}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto;}}
+
+/* Print: the agenda and minutes pages ARE the printable public record.
+   Browsers drop backgrounds by default, so without this the dark theme
+   prints near-white text on white paper. Applies site-wide. */
+@media print{
+  *{background:transparent!important;color:#000!important;box-shadow:none!important;}
+  body{background:#fff!important;font-size:11pt;}
+  .sidebar,footer.site,#alertSlot,.btn,.skip,.navtoggle,.no-print{display:none!important;}
+  main{margin-left:0!important;}
+  .pagehead{border-bottom:2pt solid #000;}
+  section{padding-block:1rem;}
+  a{text-decoration:none!important;}
+}

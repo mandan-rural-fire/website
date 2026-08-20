@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getSettings } from '../../lib/sanity';
+import { formatPhone, telHref, FALLBACK_PHONE } from '../../lib/defaults';
+
+const settings = await getSettings();
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+---
+<Base
+  title="Application Received | Mandan Rural Fire"
+  description="Your volunteer application has been received."
+  noindex={true}
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">Recruitment</p>
+    <h1>Application received</h1>
+    <p class="lead">Thanks for stepping up. An officer will reach out within a few days.</p>
+  </div></div>
+
+  <section>
+    <div class="wrap" style="max-width:680px;"><div class="prose">
+      <p>If you don't hear from anyone within a week, call <a href={telHref(phone)}>{phone}</a> and ask for an officer.</p>
+      <p class="muted">A reminder: we will never ask for your Social Security number by email or through this website.</p>
+      <p style="margin-top:2rem;"><a href="/" style="font-family:var(--display);font-weight:600;">&lsaquo; Back to home</a></p>
+    </div></div>
+  </section>
+</Base>

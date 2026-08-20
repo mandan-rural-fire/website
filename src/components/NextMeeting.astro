@@ -1,0 +1,31 @@
+---
+import { getMeetingSchedule } from '../lib/sanity';
+import { ruleFromSettings } from '../lib/content/schedule';
+import NextMeetingDate from './NextMeetingDate.astro';
+
+interface Props {
+  compact?: boolean;
+  /** The card's grey label line. */
+  kicker?: string;
+  /** Where the Agendas & minutes button goes; null renders no button. */
+  recordHref?: string | null;
+}
+const { compact = false, kicker = 'Next regular meeting', recordHref = null } = Astro.props;
+
+const rule = ruleFromSettings(await getMeetingSchedule());
+---
+<div class="nextmtg" style={compact
+  ? 'display:flex;flex-direction:column;justify-content:center;border-left:4px solid var(--accent);'
+  : undefined}>
+  <div class="kicker">{kicker}</div>
+  <div class="big" style="font-size:1.8rem;margin:.25rem 0 0;">
+    <NextMeetingDate weekOfMonth={rule.weekOfMonth} weekday={rule.weekday} />
+  </div>
+  <div class="big" style="font-size:1.25rem;margin:0 0 .35rem;">{rule.time}</div>
+  <div class="mono" style="font-size:.9rem">{rule.location}</div>
+  {recordHref && (
+    <a class="btn btn--primary" href={recordHref} style="margin-top:1.1rem;align-self:flex-start;display:inline-flex;">
+      Agendas &amp; minutes
+    </a>
+  )}
+</div>

@@ -1,0 +1,190 @@
+---
+import Base from '../layouts/Base.astro';
+import MapEmbed from '../components/MapEmbed.astro';
+import ConditionsCard from '../components/ConditionsCard.astro';
+import BurnActivityList from '../components/BurnActivityList.astro';
+import { ND_BURN_RESTRICTIONS_URL } from '../lib/fire';
+import { getSettings } from '../lib/sanity';
+import { formatPhone,
+  telHref,
+  FALLBACK_PHONE,
+  FALLBACK_STATE_RADIO,
+  DISTRICT_MAP_EMBED,
+  DISTRICT_MAP_FULL,
+  MORTON_COUNTY_EM_URL,
+} from '../lib/defaults';
+
+const settings = await getSettings();
+const phone = formatPhone(settings?.phoneNonEmergency ?? FALLBACK_PHONE);
+const stateRadio = formatPhone(settings?.phoneStateRadio ?? FALLBACK_STATE_RADIO);
+---
+<Base
+  title="Maps & Resources | Mandan Rural Fire"
+  description="Fire danger maps, burn restrictions, the district map, and contact numbers for residents."
+>
+  <div class="pagehead"><div class="wrap">
+    <p class="eyebrow">For residents</p>
+    <h1>Maps &amp; Resources</h1>
+    <p class="lead">Current fire danger, burn restrictions, and the area we cover.</p>
+  </div></div>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Fire danger</p>
+        <h2>Today's conditions</h2>
+        <p class="muted">Morton County's daily rating, and the whole state at a glance. Check it before any open burning.</p>
+      </div>
+      <div class="fireduo">
+        <ConditionsCard maxWidth="none" mapLink={false} />
+        <BurnActivityList />
+      </div>
+      <!-- The state's own daily render (labeled counties, legend baked in),
+           hotlinked because it is regenerated every morning; the whole
+           image links to the official restrictions map. Full-width so the
+           county labels are actually readable. -->
+      <a class="embed statemap" href={ND_BURN_RESTRICTIONS_URL} target="_blank" rel="noopener">
+        <img
+          src="https://gis.des.nd.gov/nddesfireindex.png"
+          alt="North Dakota adjective fire danger map: today's rating for every county, published daily by ND DES"
+          width="1344"
+          height="816"
+          loading="lazy"
+        />
+        <span class="mapfallback" id="mapFallback" hidden>
+          Today's map is temporarily unavailable. Open the statewide map for current ratings.
+        </span>
+        <span class="cap">
+          <span>The state's daily fire danger map, updated each morning.</span>
+          <span class="cta">Open the statewide map &rsaquo;</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <section id="district-map" style="background:var(--paper-2);border-block:1px solid var(--line);">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Coverage</p>
+        <h2>Fire district map</h2>
+        <p class="muted">The area the district covers across Morton County. Pan and zoom to explore.</p>
+      </div>
+      <MapEmbed
+        src={DISTRICT_MAP_EMBED}
+        title="Mandan Rural Fire response area map"
+        caption="The area the district covers across Morton County."
+        fullMapUrl={DISTRICT_MAP_FULL}
+      />
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Contacts</p>
+        <h2>Who to call</h2>
+      </div>
+      <div class="cards c3">
+        <div class="card"><div class="pad">
+          <h3 style="font-size:1.15rem;">Emergency</h3>
+          <p class="big" style="font-size:1.6rem;margin:.3rem 0;"><a href="tel:911">911</a></p>
+          <p class="muted" style="font-size:.92rem;">Fire, rescue, or medical emergency.</p>
+        </div></div>
+        <div class="card"><div class="pad">
+          <h3 style="font-size:1.15rem;">Department, non-emergency</h3>
+          <p class="mono" style="font-size:1.05rem;margin:.3rem 0;"><a href={telHref(phone)}>{phone}</a></p>
+          <p class="muted" style="font-size:.92rem;">Questions, records, and general department business.</p>
+        </div></div>
+        <div class="card"><div class="pad">
+          <h3 style="font-size:1.15rem;">ND State Radio</h3>
+          <p class="mono" style="font-size:1.05rem;margin:.3rem 0;"><a href={telHref(stateRadio)}>{stateRadio}</a></p>
+          <p class="muted" style="font-size:.92rem;">The department's dispatch center. Non-emergency line, day or night.</p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // If the hotlinked state PNG fails, swap the white void for a one-line
+    // note; the card's caption and link keep working either way.
+    document.addEventListener('astro:page-load', () => {
+      const img = document.querySelector<HTMLImageElement>('.statemap img');
+      const fallback = document.getElementById('mapFallback');
+      if (!img || !fallback) return;
+      const fail = (): void => {
+        img.hidden = true;
+        fallback.hidden = false;
+      };
+      if (img.complete && img.naturalWidth === 0) fail();
+      else img.addEventListener('error', fail, { once: true });
+    });
+  </script>
+
+  <section style="background:var(--paper-2);border-top:1px solid var(--line);">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Beyond this site</p>
+        <h2>More resources</h2>
+        <p class="muted">State and county sources we trust for conditions, rules, and preparedness.</p>
+      </div>
+
+      <h3 class="subhead">Statewide</h3>
+      <div class="cards c3 linkcards">
+        <a class="card" href="https://experience.arcgis.com/experience/c5da309af17b4c48a3b953675a77f654" target="_blank" rel="noopener"><div class="pad">
+          <h4>ND burn restrictions map</h4>
+          <p>Today's fire danger and every county's declaration, from ND DES.</p>
+          <span class="dom">experience.arcgis.com</span>
+        </div></a>
+        <a class="card" href="https://www.ndresponse.gov/burn" target="_blank" rel="noopener"><div class="pad">
+          <h4>NDResponse burn guidance</h4>
+          <p>The state's burn rules, definitions, and safety guidance.</p>
+          <span class="dom">ndresponse.gov</span>
+        </div></a>
+        <a class="card" href="https://www.weather.gov/bis/" target="_blank" rel="noopener"><div class="pad">
+          <h4>NWS Bismarck</h4>
+          <p>Forecasts, Red Flag Warnings, and fire weather for our area.</p>
+          <span class="dom">weather.gov/bis</span>
+        </div></a>
+        <a class="card" href="https://www.ndonecall.com" target="_blank" rel="noopener"><div class="pad">
+          <h4>ND One Call (811)</h4>
+          <p>Locate buried lines before any digging. Free, and required.</p>
+          <span class="dom">ndonecall.com</span>
+        </div></a>
+        <a class="card" href="https://www.ndsu.edu/ndfs/" target="_blank" rel="noopener"><div class="pad">
+          <h4>ND Forest Service</h4>
+          <p>Wildfire prevention programs and community assistance.</p>
+          <span class="dom">ndsu.edu/ndfs</span>
+        </div></a>
+      </div>
+
+      <h3 class="subhead" style="margin-top:2rem;">Morton County &amp; preparedness</h3>
+      <div class="cards c3 linkcards">
+        <a class="card" href={MORTON_COUNTY_EM_URL} target="_blank" rel="noopener"><div class="pad">
+          <h4>Morton County Emergency Management</h4>
+          <p>County declarations, alerts, and preparedness.</p>
+          <span class="dom">mortonnd.gov</span>
+        </div></a>
+        <a class="card" href="https://www.mortonnd.gov/fire" target="_blank" rel="noopener"><div class="pad">
+          <h4>Morton County burn rules</h4>
+          <p>The county's plain-language burning rules and fire safety page.</p>
+          <span class="dom">mortonnd.gov/fire</span>
+        </div></a>
+        <a class="card" href="https://travel.dot.nd.gov" target="_blank" rel="noopener"><div class="pad">
+          <h4>ND Roads</h4>
+          <p>Live road conditions and closures statewide.</p>
+          <span class="dom">travel.dot.nd.gov</span>
+        </div></a>
+        <a class="card" href="https://www.ready.gov/wildfires" target="_blank" rel="noopener"><div class="pad">
+          <h4>Ready.gov wildfire guide</h4>
+          <p>The federal checklist for preparing your home and family.</p>
+          <span class="dom">ready.gov/wildfires</span>
+        </div></a>
+        <a class="card" href="https://www.redcross.org/local/mn-nd-sd.html" target="_blank" rel="noopener"><div class="pad">
+          <h4>Red Cross, Minnesota &amp; Dakotas</h4>
+          <p>Home fire safety and free smoke alarm installation.</p>
+          <span class="dom">redcross.org</span>
+        </div></a>
+      </div>
+    </div>
+  </section>
+</Base>
