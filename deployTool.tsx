@@ -19,7 +19,7 @@ import type { Tool } from 'sanity';
  * is burn build minutes, and the remedy is deleting the hook in Netlify and
  * creating a new one.
  */
-const BUILD_HOOK = 'https://api.netlify.com/build_hooks/6a86583fc67254578ccd2693';
+const BUILD_HOOK = 'https://api.netlify.com/build_hooks/6a8758c2add3191f1630421f';
 const SITE_ID = 'c79965f5-3cf0-4c0a-b28e-c81fa346df5f';
 
 const badgeUrl = () =>

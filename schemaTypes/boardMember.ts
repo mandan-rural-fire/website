@@ -2,9 +2,10 @@ import { defineType, defineField } from 'sanity';
 
 /**
  * A person on the district board. Create a document only for real people:
- * a township seat with no matching document shows as "Open" on the district
- * page automatically, so there are no placeholder documents to maintain and
- * vacancy can never disagree with reality.
+ * each township has two seats, and a township with fewer than two member
+ * documents shows the rest as "Open" on the district page automatically, so
+ * there are no placeholder documents to maintain and vacancy can never
+ * disagree with reality.
  */
 export const boardMember = defineType({
   name: 'boardMember',
@@ -35,21 +36,6 @@ export const boardMember = defineType({
       to: [{ type: 'township' }],
       description:
         'Pick from the township list (add townships there first if one is missing). Leave empty for at-large members.',
-    }),
-    defineField({
-      name: 'seat',
-      title: 'Seat',
-      type: 'string',
-      description: 'Each township has a primary and a secondary seat.',
-      options: {
-        list: [
-          { title: 'Primary', value: 'primary' },
-          { title: 'Secondary', value: 'secondary' },
-        ],
-        layout: 'radio',
-      },
-      initialValue: 'primary',
-      validation: (r) => r.required(),
     }),
     defineField({ name: 'email', title: 'Email', type: 'string', validation: (r) => r.email() }),
     defineField({
@@ -98,16 +84,16 @@ export const boardMember = defineType({
       name: 'order',
       title: 'Display order',
       type: 'number',
-      description: 'Lower numbers appear first within a seat. Rarely needed; townships sort alphabetically.',
+      description: 'Lower numbers appear first within a township. Rarely needed.',
       initialValue: 10,
     }),
   ],
   orderings: [{ title: 'Display order', name: 'order', by: [{ field: 'order', direction: 'asc' }] }],
   preview: {
-    select: { title: 'name', role: 'role', township: 'township.name', seat: 'seat' },
-    prepare: ({ title, role, township, seat }) => ({
+    select: { title: 'name', role: 'role', township: 'township.name' },
+    prepare: ({ title, role, township }) => ({
       title,
-      subtitle: [role, township ? `${township} · ${seat}` : 'At large'].filter(Boolean).join(' · '),
+      subtitle: [role, township ?? 'At large'].filter(Boolean).join(' · '),
     }),
   },
 });

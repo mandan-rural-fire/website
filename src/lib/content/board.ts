@@ -2,19 +2,18 @@ import { getBoardMembers, getTownships } from '../sanity/fetchers';
 
 /**
  * The board roster, grouped for the district page: one entry per township
- * (from the canonical township documents) with its primary and secondary
- * seats, filled or open. A seat is open simply because no member document
- * claims it; vacancy is computed, never bookkept. Members without a
- * township are the at-large group.
+ * (from the canonical township documents) with its two seats, filled or
+ * open. The seats carry no designation; a township simply has up to two
+ * representatives, and a seat is open because fewer than two member
+ * documents claim the township. Vacancy is computed, never bookkept.
+ * Members without a township are the at-large group.
  *
  * Types are derived from these functions per the house typing rules.
  */
 
 type Member = Awaited<ReturnType<typeof getBoardMembers>>[number];
 
-function bySeat(members: Member[], township: string, seat: string): Member | null {
-  return members.find((m) => m.township === township && m.seat === seat) ?? null;
-}
+const SEATS_PER_TOWNSHIP = 2;
 
 export async function getBoardRoster() {
   const [members, townships] = await Promise.all([getBoardMembers(), getTownships()]);
@@ -23,17 +22,18 @@ export async function getBoardRoster() {
     .map((t) => t.name)
     .filter((n): n is string => Boolean(n));
 
+  // The query is already ordered (order asc), so filtering preserves the
+  // secretary's display order within each township.
   const rows = townshipNames.map((name) => ({
     name,
-    primary: bySeat(members, name, 'primary'),
-    secondary: bySeat(members, name, 'secondary'),
+    members: members.filter((m) => m.township === name),
   }));
 
   const atLarge = members.filter((m) => !m.township);
 
-  const seatsTotal = townshipNames.length * 2;
+  const seatsTotal = townshipNames.length * SEATS_PER_TOWNSHIP;
   const seatsFilled = rows.reduce(
-    (n, r) => n + (r.primary ? 1 : 0) + (r.secondary ? 1 : 0),
+    (n, r) => n + Math.min(r.members.length, SEATS_PER_TOWNSHIP),
     0
   );
 

@@ -87,8 +87,9 @@ src/
   layouts/Base.astro  Head (canonical/OG meta), fonts, fixed sidebar nav, footer. Footer
                       contacts come from siteSettings, mailing from districtFacts; street
                       address from the HQ station.
-  components/          Presentational. NextMeetingDate renders the meeting date and
-                      recomputes it client-side so static pages cannot go stale.
+  components/          Presentational. NextMeeting shows the earliest future meeting
+                      document if one exists, else the computed schedule date, and
+                      re-picks client-side so static pages cannot go stale.
   lib/                 All data access and view models. See below.
   pages/               One file per route. Fetch in frontmatter, render in template.
   styles/global.css    The dark theme. Do not restructure; it carries hard-won spacing and
@@ -156,10 +157,10 @@ Key relationships and patterns:
   via a nested subquery (`station._ref == ^._id`). The equipment page flattens them for the
   fleet grid while keeping the station name.
 - **Board vacancy is computed, never bookkept.** `township` documents are the canonical
-  list; each has a primary and secondary seat. A `boardMember` exists only for a real
-  person (township reference + `seat`); a seat with no matching member renders as "Open
-  seat" via `content/board.ts` (`getBoardRoster`). Do not create placeholder documents.
-  Members without a township are at-large.
+  list; each has two seats with no primary/secondary designation. A `boardMember` exists
+  only for a real person (township reference); a township with fewer than two members
+  renders its remaining seats as "Open" via `content/board.ts` (`getBoardRoster`). Do not
+  create placeholder documents. Members without a township are at-large.
 - **Meeting agenda vs minutes.** Two field groups. Agenda is published before a meeting,
   minutes after. A meeting shows in the agenda list if it has an agenda body or PDF, and in
   the minutes list if it has minutes; use the `hasAgenda`/`hasMinutes` helpers from
@@ -170,9 +171,11 @@ Key relationships and patterns:
   block editor and optionally uploads the signed PDF.
 - **Recurring meetings are NOT documents.** The schedule is a rule in meetingSchedule
   (`meetingWeekOfMonth`, `meetingWeekday`, `meetingTime`). `src/lib/content/schedule.ts`
-  computes the next date; `NextMeetingDate.astro` recomputes it in the browser so it
-  cannot go stale between rebuilds. Only meetings with real agenda/minutes content become
-  documents. Do not create empty future meeting documents.
+  computes the next date. A posted future meeting document overrides the computed rule
+  on the Next meeting cards (earliest future date wins; that is how special or
+  rescheduled meetings get announced); `NextMeeting.astro` re-picks in the browser so
+  the card cannot go stale between rebuilds. Only meetings with real agenda/minutes
+  content become documents. Do not create empty future meeting documents.
 - **Images** are fields on their owner (`apparatus.photo`, `station.photo`, `happening.photo`,
   `officer.photo`, `siteSettings.heroImage`), each with a nested `alt` field for accessibility.
   Render through `SanityImage.astro` (dimensions + srcset come free).

@@ -53,6 +53,9 @@ whoever maintains the site.
 6. Optionally upload the official **Agenda PDF**; the page offers it as a
    download.
 7. **Publish.** The agenda appears on the District page and at its own link.
+   The "Next meeting" cards on the home and district pages also switch to
+   this meeting's date, time, and location until its date passes, so this is
+   how a special or rescheduled meeting gets announced.
 
 ## Posting minutes (after the meeting)
 
@@ -113,15 +116,17 @@ Each is its own list. Common tasks:
 
 - **Townships**: add each township the district spans once, under
   **Township** in the left menu. The district page groups the board by these.
-- **Board seat changes**: each township has a Primary and a Secondary seat.
-  Create a board member document only for a real person and pick their
-  township and seat; a seat with no person shows as "Open seat" on the site
-  automatically, so there is nothing to do for vacancies (delete a departing
-  member's document and the seat reopens itself). Leave township empty for
-  at-large members.
+- **Board seat changes**: each township has two seats, with no distinction
+  between them. Create a board member document only for a real person and
+  pick their township; a township with fewer than two members shows its
+  remaining seats as "Open" on the site automatically, so there is nothing
+  to do for vacancies (delete a departing member's document and the seat
+  reopens itself). Leave township empty for at-large members.
 - **Meeting schedule change**: **Meeting schedule** (next to Meetings): week of
   month, weekday, time, location. Every "next meeting" date on the site
-  computes from this; there is nothing else to update.
+  computes from this; there is nothing else to update. The one exception: a
+  posted upcoming meeting shows its own details on the "Next meeting" cards
+  until its date passes.
 - **Contact info**: **Site settings** under Website holds the phone numbers
   and two emails: the **Department email** (operations: footer Department
   column, join page, accessibility statement) and the **Board email** (the

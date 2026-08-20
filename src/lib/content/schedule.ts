@@ -56,6 +56,20 @@ export function nextMeetingDate(
   );
 }
 
+/** Parses a YYYY-MM-DD string into a local Date, or null if malformed. */
+export function parseIsoDate(iso: string): Date | null {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+/** Today as YYYY-MM-DD in local time, comparable against meeting date strings. */
+export function todayIso(from = new Date()): string {
+  const mm = String(from.getMonth() + 1).padStart(2, '0');
+  const dd = String(from.getDate()).padStart(2, '0');
+  return `${from.getFullYear()}-${mm}-${dd}`;
+}
+
 export function formatMeetingDate(d: Date): string {
   return d.toLocaleDateString('en-US', {
     weekday: 'long',

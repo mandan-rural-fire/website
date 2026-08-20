@@ -1,11 +1,17 @@
 ---
 import { getMeetingSchedule } from '../lib/sanity';
-import { ruleFromSettings } from '../lib/content/schedule';
-import NextMeetingDate from './NextMeetingDate.astro';
+import {
+  ruleFromSettings,
+  nextMeetingDate,
+  formatMeetingDate,
+  parseIsoDate,
+  todayIso,
+} from '../lib/content/schedule';
+import { getMeetings } from '../lib/content/meetings';
 
 interface Props {
   compact?: boolean;
-  /** The card's grey label line. */
+  /** The card's grey label line, used when no meeting document overrides it. */
   kicker?: string;
   /** Where the Agendas & minutes button goes; null renders no button. */
   recordHref?: string | null;
@@ -13,19 +19,97 @@ interface Props {
 const { compact = false, kicker = 'Next regular meeting', recordHref = null } = Astro.props;
 
 const rule = ruleFromSettings(await getMeetingSchedule());
+
+// A posted future meeting document (regular or special) overrides the
+// computed rule; the earliest one wins. The upcoming list is baked into the
+// card so the browser can re-pick after a date passes without a rebuild.
+const upcoming = (await getMeetings())
+  .filter((m) => m.date >= todayIso())
+  .sort((a, b) => a.date.localeCompare(b.date))
+  .slice(0, 4)
+  .map((m) => ({ date: m.date, time: m.time, location: m.location, title: m.title }));
+
+const next = upcoming[0];
+const nextDate = next ? parseIsoDate(next.date) : null;
+const shown =
+  next && nextDate
+    ? {
+        kicker: next.title || kicker,
+        date: nextDate,
+        time: next.time || rule.time,
+        location: next.location || rule.location,
+      }
+    : { kicker, date: nextMeetingDate(rule), time: rule.time, location: rule.location };
 ---
-<div class="nextmtg" style={compact
-  ? 'display:flex;flex-direction:column;justify-content:center;border-left:4px solid var(--accent);'
-  : undefined}>
-  <div class="kicker">{kicker}</div>
-  <div class="big" style="font-size:1.8rem;margin:.25rem 0 0;">
-    <NextMeetingDate weekOfMonth={rule.weekOfMonth} weekday={rule.weekday} />
+<div
+  class="nextmtg"
+  data-nextmtg
+  data-week-of-month={rule.weekOfMonth}
+  data-weekday={rule.weekday}
+  data-time={rule.time}
+  data-location={rule.location}
+  data-kicker={kicker}
+  data-meetings={JSON.stringify(upcoming)}
+  style={compact
+    ? 'display:flex;flex-direction:column;justify-content:center;border-left:4px solid var(--accent);'
+    : undefined}
+>
+  <div class="kicker" data-nm-kicker>{shown.kicker}</div>
+  <div class="big" data-nm-date style="font-size:1.8rem;margin:.25rem 0 0;">
+    {formatMeetingDate(shown.date)}
   </div>
-  <div class="big" style="font-size:1.25rem;margin:0 0 .35rem;">{rule.time}</div>
-  <div class="mono" style="font-size:.9rem">{rule.location}</div>
+  <div class="big" data-nm-time style="font-size:1.25rem;margin:0 0 .35rem;">{shown.time}</div>
+  <div class="mono" data-nm-location style="font-size:.9rem">{shown.location}</div>
   {recordHref && (
     <a class="btn btn--primary" href={recordHref} style="margin-top:1.1rem;align-self:flex-start;display:inline-flex;">
       Agendas &amp; minutes
     </a>
   )}
 </div>
+
+<script>
+  import {
+    nextMeetingDate,
+    formatMeetingDate,
+    parseIsoDate,
+    todayIso,
+  } from '../lib/content/schedule';
+
+  // Rebuilds only happen on content changes, so the baked-in card can go
+  // stale two ways: the shown meeting's date passes, or the computed rule
+  // date rolls over. Re-pick from the baked data on every load and swap.
+  document.addEventListener('astro:page-load', () => {
+    for (const card of document.querySelectorAll<HTMLElement>('[data-nextmtg]')) {
+      const set = (sel: string, text: string) => {
+        const el = card.querySelector<HTMLElement>(sel);
+        if (el) el.textContent = text;
+      };
+
+      let meetings: { date: string; time: string; location: string; title: string }[] = [];
+      try {
+        meetings = JSON.parse(card.dataset.meetings ?? '[]');
+      } catch {
+        /* malformed attribute; fall through to the rule */
+      }
+      const today = todayIso();
+      const next = meetings.find((m) => typeof m.date === 'string' && m.date >= today);
+      const nextDate = next ? parseIsoDate(next.date) : null;
+
+      if (next && nextDate) {
+        set('[data-nm-kicker]', next.title || card.dataset.kicker || '');
+        set('[data-nm-date]', formatMeetingDate(nextDate));
+        set('[data-nm-time]', next.time || card.dataset.time || '');
+        set('[data-nm-location]', next.location || card.dataset.location || '');
+        continue;
+      }
+
+      const weekOfMonth = Number(card.dataset.weekOfMonth);
+      const weekday = Number(card.dataset.weekday);
+      if (!Number.isInteger(weekOfMonth) || !Number.isInteger(weekday)) continue;
+      set('[data-nm-kicker]', card.dataset.kicker ?? '');
+      set('[data-nm-date]', formatMeetingDate(nextMeetingDate({ weekOfMonth, weekday })));
+      set('[data-nm-time]', card.dataset.time ?? '');
+      set('[data-nm-location]', card.dataset.location ?? '');
+    }
+  });
+</script>

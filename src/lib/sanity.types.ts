@@ -244,7 +244,6 @@ export type BoardMember = {
   name: string;
   role: 'President' | 'Vice President' | 'Treasurer' | 'Director';
   township?: TownshipReference;
-  seat: 'primary' | 'secondary';
   email?: string;
   phone?: string;
   preferredContact?: 'email' | 'phone';
@@ -536,11 +535,10 @@ export type MEETINGS_QUERY_RESULT = Array<{
 
 // Source: src/lib/sanity/queries.ts
 // Variable: BOARD_QUERY
-// Query: *[_type == "boardMember"] | order(order asc){  name, role, seat, email, phone, preferredContact, lastElected,  "township": township->name}
+// Query: *[_type == "boardMember"] | order(order asc){  name, role, email, phone, preferredContact, lastElected,  "township": township->name}
 export type BOARD_QUERY_RESULT = Array<{
   name: string;
   role: 'Director' | 'President' | 'Treasurer' | 'Vice President';
-  seat: 'primary' | 'secondary';
   email: string | null;
   phone: string | null;
   preferredContact: 'email' | 'phone' | null;
@@ -734,7 +732,7 @@ import '@sanity/client';
 declare module '@sanity/client' {
   interface SanityQueries {
     '*[_type == "meeting"] | order(date desc){\n  "slug": slug.current,\n  date, title, time, locationType, otherLocation,\n  "stationName": station->name,\n  "stationAddress": station->address,\n  agendaBody, minutesBody, minutesStatus,\n  "agendaPdfUrl": agendaPdf.asset->url,\n  "minutesPdfUrl": minutesPdf.asset->url\n}': MEETINGS_QUERY_RESULT;
-    '*[_type == "boardMember"] | order(order asc){\n  name, role, seat, email, phone, preferredContact, lastElected,\n  "township": township->name\n}': BOARD_QUERY_RESULT;
+    '*[_type == "boardMember"] | order(order asc){\n  name, role, email, phone, preferredContact, lastElected,\n  "township": township->name\n}': BOARD_QUERY_RESULT;
     '*[_type == "township"] | order(name asc){\n  name\n}': TOWNSHIPS_QUERY_RESULT;
     '*[_type == "vote" && date >= $today] | order(date asc){\n  title, date, summary, votingInfo, link\n}': UPCOMING_VOTES_QUERY_RESULT;
     '*[_type == "vote" && date < $today] | order(date desc){\n  title, date, summary, outcome, resultSummary\n}': PAST_VOTES_QUERY_RESULT;

@@ -6,7 +6,7 @@ only recurring cost to the district is the domain.
 ## The moving parts
 
 ```
-GitHub (tbosch82/mrfd-website, branch main)
+GitHub (mandan-rural-fire/website, branch main)
    push -> Netlify builds and deploys        (code changes)
 
 Sanity (project ri0z6y8l, dataset production)

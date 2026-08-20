@@ -2,7 +2,7 @@ import { defineType, defineField } from 'sanity';
 
 /**
  * A township the district spans. The canonical list: board members reference
- * these, and any township without a primary or secondary member shows its
+ * these, and any township with fewer than two members shows its remaining
  * seats as open on the district page automatically. Add each township once;
  * there is nothing else to maintain here.
  */

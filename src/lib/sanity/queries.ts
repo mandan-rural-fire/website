@@ -14,7 +14,7 @@ export const MEETINGS_QUERY = defineQuery(`*[_type == "meeting"] | order(date de
 }`);
 
 export const BOARD_QUERY = defineQuery(`*[_type == "boardMember"] | order(order asc){
-  name, role, seat, email, phone, preferredContact, lastElected,
+  name, role, email, phone, preferredContact, lastElected,
   "township": township->name
 }`);
 

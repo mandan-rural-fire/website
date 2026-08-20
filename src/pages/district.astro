@@ -118,13 +118,14 @@ const collapseDirectors = roster.people.length > 6 && officers.length > 0 && dir
                   </summary>
                   <div class="seatmap">
                   <div class="seatmap-row seatmap-head" aria-hidden="true">
-                    <span>Township</span><span>Primary</span><span>Secondary</span>
+                    <span>Township</span><span>Representatives</span><span></span>
                   </div>
                   {roster.townships.map((t) => (
                     <div class="seatmap-row">
                       <span class="t">{t.name}</span>
-                      <span>{t.primary ? <span class="filled">{t.primary.name}</span> : <span class="open">Open</span>}</span>
-                      <span>{t.secondary ? <span class="filled">{t.secondary.name}</span> : <span class="open">Open</span>}</span>
+                      {[t.members[0], t.members[1]].map((m) => (
+                        <span>{m ? <span class="filled">{m.name}</span> : <span class="open">Open</span>}</span>
+                      ))}
                     </div>
                   ))}
                 </div>

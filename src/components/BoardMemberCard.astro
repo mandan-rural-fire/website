@@ -12,7 +12,7 @@ const { member: m } = Astro.props;
     <p class="kicker">{m.role}</p>
     <h3 style="font-size:1.2rem;margin:.3rem 0 .35rem;">{m.name}</h3>
     <p class="mono" style="font-size:.78rem;color:var(--text-soft);margin:0 0 .4rem;">
-      {m.township ? `Township ${m.township} · ${m.seat === 'secondary' ? 'Secondary' : 'Primary'} seat` : 'At large'}
+      {m.township ? `Township ${m.township}` : 'At large'}
       {m.lastElected && <><br />Elected {m.lastElected}</>}
     </p>
     <MemberContact member={m} />
