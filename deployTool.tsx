@@ -19,7 +19,7 @@ import type { Tool } from 'sanity';
  * is burn build minutes, and the remedy is deleting the hook in Netlify and
  * creating a new one.
  */
-const BUILD_HOOK = 'https://api.netlify.com/build_hooks/6a73fb89734037808310ddc0';
+const BUILD_HOOK = 'https://api.netlify.com/build_hooks/6a86583fc67254578ccd2693';
 const SITE_ID = '81aa63f9-275b-44b0-9b0c-55ef4d6e0b6a';
 
 const badgeUrl = () =>
@@ -54,8 +54,8 @@ function DeployTool() {
           </Text>
           <Text size={1} muted>
             The public site rebuilds itself from your published content. Finish and Publish your
-            edits first, then press the button once. One press covers everything you published,
-            no need to press it per change.
+            edits first, then press the button once. One press covers everything you published, no
+            need to press it per change.
           </Text>
           <Button
             icon={PublishIcon}
@@ -66,8 +66,8 @@ function DeployTool() {
           />
           {state === 'started' && (
             <Text size={1}>
-              Build started. The site updates when the light below turns green, usually a minute
-              or two.
+              Build started. The site updates when the light below turns green, usually a minute or
+              two.
             </Text>
           )}
           {state === 'error' && (
