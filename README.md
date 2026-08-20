@@ -12,7 +12,11 @@ danger, prevention tips, board meeting agendas and minutes (the District is a
 political subdivision, so open records and accessibility matter), and
 volunteer recruitment.
 
-Live at <https://mandanruralfire.netlify.app>.
+Live at <https://mandanruralfire.org>.
+
+## Status
+
+[![Netlify Status](https://netlify.com)](https://netlify.com)
 
 ## Stack
 
