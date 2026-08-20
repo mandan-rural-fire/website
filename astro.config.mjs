@@ -12,8 +12,7 @@ const { PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET } =
 // https://astro.build/config
 export default defineConfig({
   // Canonical origin, used for canonical URLs, og:url, and the sitemap.
-  // Update this once when the district's custom domain goes live.
-  site: 'https://mandanruralfire.netlify.app',
+  site: 'https://mandanruralfire.org',
   // Fetch pages on link hover so navigation feels instant. The injected
   // script is ~1KB; the exception to zero-JS is deliberate.
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },

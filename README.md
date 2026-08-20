@@ -16,7 +16,7 @@ Live at <https://mandanruralfire.org>.
 
 ## Status
 
-[![Netlify Status](https://netlify.com)](https://netlify.com)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/c79965f5-3cf0-4c0a-b28e-c81fa346df5f/deploy-status)](https://app.netlify.com/projects/mandan-rural-fire/deploys)
 
 ## Stack
 

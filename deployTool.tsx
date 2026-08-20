@@ -20,7 +20,7 @@ import type { Tool } from 'sanity';
  * creating a new one.
  */
 const BUILD_HOOK = 'https://api.netlify.com/build_hooks/6a86583fc67254578ccd2693';
-const SITE_ID = '81aa63f9-275b-44b0-9b0c-55ef4d6e0b6a';
+const SITE_ID = 'c79965f5-3cf0-4c0a-b28e-c81fa346df5f';
 
 const badgeUrl = () =>
   `https://api.netlify.com/api/v1/badges/${SITE_ID}/deploy-status?cachebust=${Date.now()}`;

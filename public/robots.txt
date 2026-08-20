@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /studio
 
-Sitemap: https://mandanruralfire.netlify.app/sitemap-index.xml
+Sitemap: https://mandanruralfire.org/sitemap-index.xml

@@ -13,9 +13,9 @@ Sanity (project ri0z6y8l, dataset production)
    publish -> webhook -> Netlify build hook  (content changes)
 ```
 
-- **Netlify site**: `mandanruralfire` (site id
-  `81aa63f9-275b-44b0-9b0c-55ef4d6e0b6a`), serving
-  <https://mandanruralfire.netlify.app>.
+- **Netlify site**: `mandan-rural-fire` on the district's own Netlify
+  account (site id `c79965f5-3cf0-4c0a-b28e-c81fa346df5f`), serving
+  <https://mandanruralfire.org>.
 - **Build settings live in `netlify.toml`**, which overrides the UI:
   `yarn build` into `dist/`, Node 22, headers, and the `/api/fire-status`
   redirect to the serverless function.

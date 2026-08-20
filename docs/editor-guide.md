@@ -12,7 +12,7 @@ it, see "Updating the website yourself" below.
 
 ## Getting in
 
-1. Go to `https://mandanruralfire.netlify.app/studio`
+1. Go to `https://mandanruralfire.org/studio`
 2. Sign in with the account you were invited with.
 
 The left menu is grouped by owner. The **Emergency alert** sits alone on
